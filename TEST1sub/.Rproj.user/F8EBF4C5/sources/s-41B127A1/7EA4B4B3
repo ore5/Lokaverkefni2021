@@ -3,7 +3,7 @@
     "path": "~/GitHub/Lokaverkefni2021/TEST1sub/Test1Sub.Rmd",
     "project_path": "Test1Sub.Rmd",
     "type": "r_markdown",
-    "hash": "518671688",
+    "hash": "581831563",
     "contents": "",
     "dirty": false,
     "created": 1602607828983.0,
@@ -11,18 +11,18 @@
     "relative_order": 1,
     "properties": {
         "tempName": "Untitled1",
-        "cursorPosition": "95,0",
-        "scrollLine": "85",
+        "cursorPosition": "0,0",
+        "scrollLine": "0",
         "last_setup_crc32": "",
         "docOutlineVisible": "0",
         "chunk_output_type": "console"
     },
     "folds": "",
-    "lastKnownWriteTime": 1603812480,
+    "lastKnownWriteTime": 1603812628,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1603812480097,
+    "last_content_update": 1603812628045,
     "read_only": false,
     "read_only_alternatives": []
 }
