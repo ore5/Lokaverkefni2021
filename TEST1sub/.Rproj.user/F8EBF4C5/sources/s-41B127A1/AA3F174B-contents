@@ -1,0 +1,50 @@
+---
+title: "Villur"
+author: "Unnar"
+date: "8/17/2020"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, message = F, warning = F) 
+library(tidyverse)
+theme_set(theme_light())
+load("MMS gagnasafn lokaskjal.RData")
+
+```
+
+```{r}
+villuMynd <- function(bekkur_nr){
+data_fyrri %>% filter(bekkur == bekkur_nr) %>% dplyr::select(kenni) %>% unique() -> fjoldi
+data_fyrri %>% 
+  filter(bekkur == bekkur_nr & svar == 0) %>% 
+  count(sp_ord, sv_ord, sort = T) %>%
+  mutate(
+    n = n/nrow(fjoldi)
+    ) %>%
+  head(30) %>%
+  ggplot(aes(reorder(sp_ord, n, sum), n, fill = sv_ord, label = sv_ord)) +
+  geom_col(position = position_dodge2(padding = 0.2)) + 
+  theme(legend.position = "none") +
+  coord_flip() +
+  geom_text( 
+    hjust = -0.5,
+    position = position_dodge(width = 1),
+    inherit.aes = TRUE
+  ) +
+  labs(
+    title = paste0("Villur í ", bekkur_nr, ". bekk"),
+    y = "Hlutfall",
+    x = "Rétt orð",
+    caption = "Súlurnar tákna algengustu villur í hverju orði"
+    ) +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 20), limits = c(0,1)) 
+  
+}
+
+map(3:10, ~ villuMynd(.x))
+
+```
+
+

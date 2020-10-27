@@ -1,0 +1,815 @@
+---
+title: "Yfirlit"
+author: "Unnar og Ólöf"
+date: "6/18/2020"
+output: html_document
+---
+ 
+```{r}
+library(tidyverse)
+library(readxl)
+ 
+data_fyrri <- read_xlsx("data_fyrri.xlsx")
+data_seinni <- read_xlsx("data_seinni.xlsx")
+inntaksord <- read_xlsx("inntaksord.xlsx")
+ 
+inntaksord <- inntaksord %>%
+  rename(sp_ord = ord)
+ 
+data_fyrri <- left_join(inntaksord, data_fyrri)
+data_seinni <- left_join(inntaksord, data_seinni)
+ 
+data_fyrri <- data_fyrri %>%
+  dplyr::select(kenni, skoli, skolanr, bekkur, numer_atridi, sp_ord, sv_ord, timi, svar)
+data_seinni <- data_seinni %>%
+  dplyr::select(kenni, skoli, skolanr, bekkur, numer_atridi, sp_ord, sv_ord, timi, svar)
+```
+ 
+ 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+cvBekkir <- c("3. Bekkur", "4. Bekkur", "5. Bekkur", "6. Bekkur", "7. Bekkur", "8. Bekkur", "9. Bekkur", "10. Bekkur")
+blokkir <- list(
+  '3-4' = c("hratt", "hlakka", "blíða", "ætla", "hvor", "skólinn"),
+  '4-5' = c("glampi", "stuttbuxur", "þeirra", "sveitinni", "fagran","klukkan"),
+  '5-6' = c("lærdóminn", "sammála", "áreiðanlega", "vöxt", "bæina"),
+  '6-7' = c("norskur", "spegilsléttur", "menntun", "skipti", "góðan", "Steinunn"),
+  '7-8' = c("Austfirði", "kaðalinn", "nýjunga", "þiggur", "himininn"),
+  '8-9' = c("Útivistarreglur", "uppgötva", "flaksaðist", "útilega", "kyrrt"),
+  '9-10' = c("Atlantshafið", "fýsilegir", "læknisskoðunar", "eygir", "snöggklippta", "brattan")
+)
+LagaKT <- function(kenni) {
+  kenni  <- gsub("-|\\s", "", kenni)
+  lengd = nchar(kenni)
+ 
+  v0a = ifelse(substr(kenni, nchar(kenni), nchar(kenni)) == 0, 1, 0)
+  kenni <- ifelse(lengd == 9 & v0a == 0, paste0(kenni,"0"), kenni)
+  lengd = nchar(kenni)
+  kenni <- ifelse(lengd == 9, paste0("0", kenni), kenni)
+}
+ 
+library(tidyverse)
+library(openxlsx)
+library(CTT)
+theme_set(theme_light())
+ordalistinn <- readxl::read_excel("Ordalisti.xlsx")
+ordalisti <- list(
+              "3" = ordalistinn %>% filter(bekkur == 3) %>% dplyr::select("ord"),
+              "4" = ordalistinn %>% filter(bekkur == 4) %>% dplyr::select("ord"),
+              "5" = ordalistinn %>% filter(bekkur == 5) %>% dplyr::select("ord"),
+              "6" = ordalistinn %>% filter(bekkur == 6) %>% dplyr::select("ord"),
+              "7" = ordalistinn %>% filter(bekkur == 7) %>% dplyr::select("ord"),
+              "8" = ordalistinn %>% filter(bekkur == 8) %>% dplyr::select("ord"),
+              "9" = ordalistinn %>% filter(bekkur == 9) %>% dplyr::select("ord"),
+              "10" = ordalistinn %>% filter(bekkur == 10) %>% dplyr::select("ord")
+)
+ 
+```
+ 
+### Byrja á því að laga kennitöluna
+ 
+```{r}
+LagaKT <- function(kenni) {
+  kenni  <- gsub("-|\\s", "", kenni)
+  lengd = nchar(kenni)
+ 
+  v0a = ifelse(substr(kenni, nchar(kenni), nchar(kenni)) == 0, 1, 0)
+  kenni <- ifelse(lengd == 9 & v0a == 0, paste0(kenni,"0"), kenni)
+  lengd = nchar(kenni)
+  kenni <- ifelse(lengd == 9, paste0("0", kenni), kenni)
+}
+ 
+data_fyrri %>% as_tibble() %>%
+  mutate(
+    svar = if_else(sv_ord == sp_ord & svar == 0, 1,svar),
+    kenni = LagaKT(kenni)
+    ) -> data_fyrri
+ 
+data_seinni %>% as_tibble() %>%
+  mutate(
+    svar = if_else(sv_ord == sp_ord & svar == 0, 1,svar),
+    kenni = LagaKT(kenni)
+    ) -> data_seinni
+ 
+data_fyrri %>%
+  group_by(kenni) %>%
+  count() %>%
+  arrange(desc(n))
+ 
+data_seinni %>%
+  group_by(kenni) %>%
+  count() %>%
+  arrange(desc(n))
+ 
+#filtera þessar kennitölur út vegna þess að þær koma að einhverjum hluta tvisvar sinnum
+#SPYRJA AUÐUN, ÞETTA VIRÐIST VERA NKL SAMA PRÓFIÐ HJÁ ÖLLUM KENNITÖLUM EN HEFUR KOMIÐ FYRIR HJÁ TVEIM SKOLUM ? svar tíminn er alltaf sami fyrir hvert orð og sv_orð eins. þannig það er spurning hvort við filterum út annan skólann ? eða bara þetta út í heild og tölum um það ?
+#15 kennitölur
+ 
+ 
+ 
+data_fyrri %>%
+filter(kenni != "0202063490") %>%
+filter(kenni != "0606092330") %>%
+filter(kenni != "0809042740") %>%
+filter(kenni != "1106092720") %>%
+filter(kenni != "1401093040") %>%
+filter(kenni != "1511092920") %>%
+filter(kenni != "1702082690") %>%
+filter(kenni != "1903094950") %>%
+filter(kenni != "1904092950") %>%
+filter(kenni != "1905093460") %>%
+filter(kenni != "2010033180") %>%
+filter(kenni != "2201093050") %>%
+filter(kenni != "2206052990") %>%
+filter(kenni != "2412083110") %>%
+filter(kenni != "3004092370") %>% 
+filter(kenni != "0202062840") -> data_fyrri
+ 
+ 
+ 
+#35 kennitölur
+data_seinni %>%
+filter(kenni != "0202092590") %>%      
+filter(kenni != "0202092910") %>%
+filter(kenni != "0207062280") %>%
+filter(kenni != "0209084160") %>%
+filter(kenni != "0211032250") %>%
+filter(kenni != "0303062870") %>%
+filter(kenni != "0306092630") %>%
+filter(kenni != "0410093140") %>%
+filter(kenni != "0511082210") %>%
+filter(kenni != "0603073180") %>%
+filter(kenni != "0607063280") %>%
+filter(kenni != "0608092240") %>%
+filter(kenni != "0705082140") %>%
+filter(kenni != "0809092330") %>%
+filter(kenni != "1208083970") %>%
+filter(kenni != "1210082620") %>%
+filter(kenni != "1302063010") %>%
+filter(kenni != "1302063870") %>%
+filter(kenni != "1408082290") %>%
+filter(kenni != "1501082680") %>%
+filter(kenni != "1606072970") %>%
+filter(kenni != "1711073180") %>%
+filter(kenni != "1801032440") %>%
+filter(kenni != "1808054350") %>%
+filter(kenni != "1811082740") %>%
+filter(kenni != "1909052410") %>%
+filter(kenni != "2109082420") %>%
+filter(kenni != "2501052580") %>%
+filter(kenni != "2506082760") %>%
+filter(kenni != "2612033160") %>%
+filter(kenni != "2706082210") %>%
+filter(kenni != "2907083890") %>%
+filter(kenni != "2909033270") %>%
+filter(kenni != "2909082210") %>%
+filter(kenni != "3011092960") -> data_seinni
+
+```
+ 
+ 
+ 
+```{r}
+data_fyrri %>% filter(bekkur %in% c(10)) %>%
+  dplyr::select(kenni) %>%
+  unique() %>%
+  count()
+ 
+#hversu margir skólar
+data_fyrri %>%
+  dplyr::select(skoli) %>%
+  unique() %>%
+  count()
+```
+ 
+ 
+```{r}
+data_seinni %>% filter(bekkur %in% c(3,4,5,6,7,8,9,10)) %>%
+  dplyr::select(kenni) %>%
+  unique() %>%
+  count()
+ 
+data_seinni  %>% dplyr::select(skoli) %>%
+  unique() %>%
+  count()
+ 
+```
+ 
+#### Það sem þarf að laga í gagnasafninu.
+ 
+#4. bekkur
+ 
+***áreiðanlega - stærðfræði.***
+Gefið rétt fyrir stærðfræði. „Brynja vinnur áreiðanlega skákina.“
+Rant orð og málsgrein í inntaskskráinni
+ 
+Gefið rétt fyrir bæði hver með litlum og stórum staf.
+4 gera það með stórum og 347 með litlum í fyrri fyrir lögninni  
+9 gera það með stórum og 489 með litlum í seinni fyrir lögninni
+ 
+Hver – hver
+Hver – Hver
+ 
+Svo virðist sem excel skjalið hafi rangt um orðið 'Hver' og ákveðum við því að hafa það með litlum staf. **Bitches.**
+ 
+Inntaksorðið er með stórum Hvor, setningin er – „**Hver** vill koma í sund?“
+ 
+```{r}
+#**stærðfrærði** fyrri
+data_fyrri_4 <- data_fyrri %>%
+  filter(bekkur == 4)
+ 
+data_fyrri_test <- data_fyrri %>%
+  filter(bekkur != 4)
+ 
+data_fyrri_4 <- data_fyrri_4 %>%
+  mutate(sp_ord = fct_recode(sp_ord, "stærðfræði" = "áreiðanlega"))
+ 
+data_fyrri <- rbind(data_fyrri_test, data_fyrri_4)
+ 
+# **stærðfræði** seinni
+data_seinni_4 <- data_seinni %>%
+  filter(bekkur == 4)
+ 
+data_seinni_test <- data_seinni %>%
+  filter(bekkur != 4)
+ 
+data_seinni_4 <- data_seinni_4 %>%
+  mutate(sp_ord = fct_recode(sp_ord, "stærðfræði" = "áreiðanlega"))
+ 
+data_seinni <- rbind(data_seinni_test, data_seinni_4)
+ 
+################################
+ 
+# **hver** fyrri
+data_fyrri %>%
+  mutate(sp_ord = fct_recode(sp_ord, "hver" = "Hver"))  -> data_fyrri
+
+# **hver** seinni
+data_seinni %>%
+  mutate(sp_ord = fct_recode(sp_ord, "hver" = "Hver")) -> data_seinni
+
+################################
+ 
+ordalistinn %>%
+  mutate(ord = fct_recode(ord, "hver" = "Hver")) -> ordalistinn
+################################
+ 
+data_fyrri_4 <- ordalistinn %>%
+  filter(bekkur == 4)
+ 
+data_fyrri_test <- ordalistinn %>%
+  filter(bekkur != 4)
+ 
+data_fyrri_4 <- data_fyrri_4 %>%
+  mutate(ord = fct_recode(ord, "stærðfræði" = "áreiðanlega"))
+ 
+ordalistinn <- rbind(data_fyrri_test, data_fyrri_4)
+ 
+###############################
+data_fyrri_4 <- inntaksord %>%
+  filter(bekkur == 4)
+ 
+data_fyrri_test <- inntaksord %>%
+  filter(bekkur != 4)
+ 
+data_fyrri_4 <- data_fyrri_4 %>%
+  mutate(sp_ord = fct_recode(sp_ord, "stærðfræði" = "áreiðanlega"))
+ 
+inntaksord <- rbind(data_fyrri_test, data_fyrri_4)
+```
+ 
+ 
+5. bekkur
+ 
+***fyrir og heilsuhraustir*** orðið í excel segir heilsuhraustur en í setningunni er það **Íþróttir eru fyrir alla.** heilsuhraustir er rétt
+ 
+```{r}
+#fyrri
+data_fyrri_5 <- data_fyrri %>%
+  filter(bekkur == 5)
+ 
+data_fyrri_test <- data_fyrri %>%
+  filter(bekkur != 5)
+ 
+data_fyrri_5 <- data_fyrri_5 %>%
+  mutate(sp_ord = fct_recode(sp_ord, "heilsuhraustir" = "fyrir"))
+ 
+data_fyrri <- rbind(data_fyrri_test, data_fyrri_5)
+ 
+ 
+#seinni
+data_seinni_5 <- data_seinni %>%
+  filter(bekkur == 5)
+ 
+data_seinni_test <- data_seinni %>%
+  filter(bekkur != 5)
+ 
+data_seinni_5 <- data_seinni_5 %>%
+  mutate(sp_ord = fct_recode(sp_ord, "heilsuhraustir" = "fyrir"))
+ 
+data_seinni <- rbind(data_seinni_test, data_seinni_5)
+ 
+################################
+ 
+ data_fyrri_4 <- ordalistinn %>%
+  filter(bekkur == 5)
+ 
+data_fyrri_test <- ordalistinn %>%
+  filter(bekkur != 5)
+ 
+data_fyrri_4 <- data_fyrri_4 %>%
+  mutate(ord = fct_recode(ord, "heilsuhraustir" = "fyrir"))
+ 
+ordalistinn <- rbind(data_fyrri_test, data_fyrri_4)
+ 
+###############################
+ 
+data_fyrri_4 <- inntaksord %>%
+  filter(bekkur == 5)
+ 
+data_fyrri_test <- inntaksord %>%
+  filter(bekkur != 5)
+ 
+data_fyrri_4 <- data_fyrri_4 %>%
+  mutate(sp_ord = fct_recode(sp_ord, "heilsuhraustir" = "fyrir"))
+ 
+inntaksord <- rbind(data_fyrri_test, data_fyrri_4)
+ 
+```
+ 
+***norksur og sænksur*** orðið í exel segir sænskur en í setningunni er það **Langafi minn er norskur.** norskur! það er gefið rétt svar fyrir sænskur
+ 
+```{r}
+#fyrri
+data_fyrri <- mutate(data_fyrri, sp_ord = fct_recode(sp_ord, "norskur" = "sænskur"))
+
+ #seinni
+data_seinni <- mutate(data_seinni, sp_ord = fct_recode(sp_ord, "norskur" = "sænskur"))
+ 
+ 
+ordalistinn <- mutate(ordalistinn, ord = fct_recode(ord, "norskur" = "sænskur"))
+ 
+inntaksord <- mutate(inntaksord, sp_ord = fct_recode(sp_ord, "norskur" = "sænskur"))
+                     
+```
+ 
+6. bekkur
+ 
+Inntaksorðið er **Vestfirðir**,  einn þáttakandi í báðum fyrir lögnum fengu rétt fyrir að skrifa Vestfirðir, ekki sami einstaklingurinn, í sitthvorum skólanum
+ 
+Það er gefið rétt fyrir Vestfirði  „**Vinirnir ferðuðust um Vestfirði**"
+ 
+Vestfirðir – Vestfirði
+ 
+```{r}
+ 
+data_fyrri <- mutate(data_fyrri, sp_ord = fct_recode(sp_ord, "Vestfirði" = "Vestfirðir"))
+ 
+ 
+data_seinni <- mutate(data_seinni, sp_ord = fct_recode(sp_ord, "Vestfirði" = "Vestfirðir"))
+
+ 
+data_fyrri <- mutate(data_fyrri, sp_ord = fct_recode(sp_ord, "klippti" = "Útilega"))
+ 
+
+data_seinni <- mutate(data_seinni, sp_ord = fct_recode(sp_ord, "klippti" = "Útilega"))
+ 
+ 
+ordalistinn <- mutate(ordalistinn, ord = fct_recode(ord, "Vestfirði" = "Vestfirðir"))
+ 
+inntaksord <- mutate(inntaksord, sp_ord = fct_recode(sp_ord, "Vestfirði" = "Vestfirðir"))
+ 
+ordalistinn <- mutate(ordalistinn, ord = fct_recode(ord, "klippti" = "Útilega"))
+ 
+inntaksord <- mutate(inntaksord, sp_ord = fct_recode(sp_ord, "klippti" = "Útilega"))
+ 
+```
+ 
+ 
+8. bekkur
+##þarf að ATH
+Fyrri fyrir lögnin: 36 sem fá rétt fyrir að skrifa útivistarreglur  og 26 sem fá rétt fyrir að skrifa það með stórum staf Útivistarreglur.
+ 
+Seinni fyrir lögninni: 100 sem fá rétt fyrir að skrifa með litlu ú og 61 sem fá rétt fyrir að skrifa það með stóru Ú
+Inntaksorðið er það  með litlu ú, en málsgreinin er
+ 
+„Útivistarreglur eru settar til öryggis fyrir börn og ungmenni.“
+ 
+```{r}
+data_fyrri <- mutate(data_fyrri, sp_ord = fct_recode(sp_ord,"Útivistarreglur" = "útivistarreglur" ))
+ 
+ 
+data_seinni <- mutate(data_seinni, sp_ord = fct_recode(sp_ord, "Útivistarreglur" = "útivistarreglur" ))
+ 
+ 
+ordalistinn <- mutate(ordalistinn, ord = fct_recode(ord, "Útivistarreglur" = "útivistarreglur"))
+ 
+inntaksord <- mutate(inntaksord, sp_ord = fct_recode(sp_ord, "Útivistarreglur" = "útivistarreglur"))
+ 
+```
+Inntaksorð er Þórarin, málsgreinin er **Ætlar þú að heimsækja Kristin afa um helgina?**, **Kristin** er rétt
+ 
+```{r}
+ 
+data_fyrri <- mutate(data_fyrri, sp_ord = fct_recode(sp_ord,"Kristin" = "Þórarin" ))
+ 
+data_seinni <- mutate(data_seinni, sp_ord = fct_recode(sp_ord, "Kristin" = "Þórarin" ))
+ 
+ordalistinn <- mutate(ordalistinn, ord = fct_recode(ord, "Kristin" = "Þórarin"))
+ 
+inntaksord <- mutate(inntaksord, sp_ord = fct_recode(sp_ord, "Kristin" = "Þórarin"))
+ 
+```
+ 
+9. bekkur
+ 
+Inntaksorð er Kristin , ekki er nein málsgrein í skjölunum sem við erum með. Gengið út frá því að orðið Þráin sé rétt þar sem að það er gefið rétt fyrir það í fyrirlögn
+ 
+```{r}
+#fyrri
+data_fyrri_9 <- data_fyrri %>%
+ filter(bekkur == 9)
+ 
+data_fyrri_test <- data_fyrri %>%
+ filter(bekkur != 9)
+ 
+data_fyrri_9 <- data_fyrri_9 %>%
+ mutate(sp_ord = fct_recode(sp_ord, "Þráin" = "Kristin"))
+ 
+data_fyrri <- rbind(data_fyrri_test, data_fyrri_9)
+ 
+#seinni
+data_seinni_9 <- data_seinni %>%
+ filter(bekkur == 9)
+ 
+data_seinni_test <- data_seinni %>%
+ filter(bekkur != 9)
+ 
+data_seinni_9 <- data_seinni_9 %>%
+ mutate(sp_ord = fct_recode(sp_ord, "Þráin" = "Kristin"))
+ 
+data_seinni <- rbind(data_seinni_test, data_seinni_9)
+ 
+################
+data_fyrri_4 <- ordalistinn %>%
+ filter(bekkur == 9)
+ 
+data_fyrri_test <- ordalistinn %>%
+ filter(bekkur != 9)
+ 
+data_fyrri_4 <- data_fyrri_4 %>%
+ mutate(ord = fct_recode(ord, "Þráin" = "Kristin"))
+ 
+ordalistinn <- rbind(data_fyrri_test, data_fyrri_4)
+ 
+###############################
+data_fyrri_4 <- inntaksord %>%
+ filter(bekkur == 9)
+ 
+data_fyrri_test <- inntaksord %>%
+ filter(bekkur != 9)
+ 
+data_fyrri_4 <- data_fyrri_4 %>%
+ mutate(sp_ord = fct_recode(sp_ord, "Þráin" = "Kristin"))
+ 
+inntaksord <- rbind(data_fyrri_test, data_fyrri_4)
+ 
+```
+ 
+9.bekkur
+ 
+Inntaksorðið er **Hvor**, ekki er nein málsgrein í gögnunum okkar, út frá því að það sé gefið rétt fyrir orðið **hvenær** gefum við okkur það að þá sé rétt orð
+```{r}
+
+#fyrri
+data_fyrri <- mutate(data_fyrri, sp_ord = fct_recode(sp_ord, "hvenær" = "Hvor"))
+ 
+#seinni
+data_seinni <- mutate(data_seinni, sp_ord = fct_recode(sp_ord, "hvenær" = "Hvor"))
+ 
+ordalistinn <- mutate(ordalistinn, ord = fct_recode(ord, "hvenær" = "Hvor"))
+ 
+inntaksord <- mutate(inntaksord, sp_ord = fct_recode(sp_ord, "hvenær" = "Hvor"))
+```
+10. bekkur
+inntaksorð er **tefldu**, málsgreinin er: **Marel og Andri tefldu sína fyrstu skák á mótinu.**, samt virðist vera gefið rétt fyrir orðið sigldu í gögnunum
+ 
+```{r}
+ 
+#fyrri
+data_fyrri_10 <- data_fyrri %>%
+ filter(bekkur == 10)
+ 
+data_fyrri_test <- data_fyrri %>%
+ filter(bekkur != 10)
+ 
+data_fyrri_10 <- data_fyrri_10 %>%
+ mutate(sp_ord = fct_recode(sp_ord, "sigldu" = "tefldu"))
+ 
+data_fyrri <- rbind(data_fyrri_test, data_fyrri_10)
+ 
+data_fyrri <- data_fyrri %>%
+ mutate(sp_ord = fct_recode(sp_ord, "Hefndarskyldan" = "hefndarskyldan"))
+ 
+#seinni
+data_seinni_10 <- data_seinni %>%
+ filter(bekkur == 10)
+ 
+data_seinni_test <- data_seinni %>%
+ filter(bekkur != 10)
+ 
+data_seinni_10 <- data_seinni_10 %>%
+ mutate(sp_ord = fct_recode(sp_ord, "sigldu" = "tefldu"))
+ 
+data_seinni <- rbind(data_seinni_test, data_seinni_10)
+ 
+data_seinni <- data_seinni %>%
+ mutate(sp_ord = fct_recode(sp_ord, "Hefndarskyldan" = "hefndarskyldan"))
+ 
+############################
+ 
+data_fyrri_4 <- ordalistinn %>%
+ filter(bekkur == 10)
+ 
+data_fyrri_test <- ordalistinn %>%
+ filter(bekkur != 10)
+ 
+data_fyrri_4 <- data_fyrri_4 %>%
+ mutate(ord = fct_recode(ord, "sigldu" = "tefldu"))
+ 
+ordalistinn <- rbind(data_fyrri_test, data_fyrri_4)
+ 
+###############################
+ 
+data_fyrri_4 <- inntaksord %>%
+ filter(bekkur == 10)
+ 
+data_fyrri_test <- inntaksord %>%
+ filter(bekkur != 10)
+ 
+data_fyrri_4 <- data_fyrri_4 %>%
+ mutate(sp_ord = fct_recode(sp_ord, "sigldu" = "tefldu"))
+ 
+inntaksord <- rbind(data_fyrri_test, data_fyrri_4)
+ 
+```
+ 
+í inntaksorðum er orðið **drenglyndið**, það er engin málsgrein, í öllum tilfellum er gefið rétt fyrir að skrifa **drenglyndi** og er engin nemandi í 10 bekk sem skrifar drenglyndið. gefum við því okkkur að orðið drenglyndi sé rétt ritað
+ 
+Í inntakslistanum hjá orðinu náttúrunni er * sem virðist ekki eiga að vera þar
+ 
+```{r}
+#fyrri
+data_fyrri <- mutate(data_fyrri, sp_ord = fct_recode(sp_ord, "drenglyndi" = "drenglyndið"))
+ 
+#seinni
+data_seinni <- mutate(data_seinni, sp_ord = fct_recode(sp_ord, "drenglyndi" = "drenglyndið"))
+ 
+#######################
+ 
+ordalistinn <- mutate(ordalistinn, ord = fct_recode(ord, "drenglyndi" = "drenglyndið"))
+ 
+inntaksord <- mutate(inntaksord, sp_ord = fct_recode(sp_ord, "drenglyndi" = "drenglyndið"))
+ 
+#######################
+ 
+data_fyrri  <- mutate(data_fyrri, sp_ord = fct_recode(sp_ord, "náttúrunni" = "náttúrunni*"))
+
+data_seinni  <- mutate(data_seinni, sp_ord = fct_recode(sp_ord, "náttúrunni" = "náttúrunni*"))
+
+#######################
+ 
+ordalistinn <- mutate(ordalistinn, ord = fct_recode(ord, "náttúrunni" = "náttúrunni*"))
+ 
+inntaksord <- mutate(inntaksord, sp_ord = fct_recode(sp_ord, "náttúrunni" = "náttúrunni*"))
+```
+ 
+```{r}
+ 
+data_fyrri %>%
+ mutate(svar = ifelse(sp_ord == sv_ord, 1,0)) -> data_fyrri
+ 
+data_seinni %>%
+ mutate(svar = ifelse(sp_ord == sv_ord, 1,0)) -> data_seinni
+ 
+data_fyrri_ekki <- data_fyrri %>%
+ filter(bekkur == 4 & numer_atridi != 27)
+ 
+data_fyrri_27 <- data_fyrri %>%
+ filter(bekkur == 4 & numer_atridi == 27) %>%
+ mutate(sp_ord = fct_recode(sp_ord, "sveitinni_2" = "sveitinni"))
+ 
+data_fyrri <- data_fyrri %>%
+ filter(bekkur != 4)
+ 
+data_fyrri <- rbind(data_fyrri, data_fyrri_ekki, data_fyrri_27)
+ 
+data_seinni_ekki <- data_seinni %>%
+ filter(bekkur == 4 & numer_atridi != 27)
+ 
+data_seinni_27 <- data_seinni %>%
+ filter(bekkur == 4 & numer_atridi == 27) %>%
+ mutate(sp_ord = fct_recode(sp_ord, "sveitinni_2" = "sveitinni"))
+ 
+data_seinni <- data_seinni %>%
+ filter(bekkur != 4)
+ 
+data_seinni <- rbind(data_seinni, data_seinni_ekki, data_seinni_27)
+ 
+data_fyrri <- data_fyrri %>%
+ dplyr::select(kenni, bekkur, numer_atridi, sp_ord, sv_ord, timi, svar)
+data_seinni <- data_seinni %>%
+ dplyr::select(kenni, bekkur, numer_atridi, sp_ord, sv_ord, timi, svar)
+ 
+#Orðalistinn
+ordalisti <- list(
+             "3" = ordalistinn %>% filter(bekkur == 3) %>% dplyr::select("ord"),
+             "4" = ordalistinn %>% filter(bekkur == 4) %>% dplyr::select("ord"),
+             "5" = ordalistinn %>% filter(bekkur == 5) %>% dplyr::select("ord"),
+             "6" = ordalistinn %>% filter(bekkur == 6) %>% dplyr::select("ord"),
+             "7" = ordalistinn %>% filter(bekkur == 7) %>% dplyr::select("ord"),
+             "8" = ordalistinn %>% filter(bekkur == 8) %>% dplyr::select("ord"),
+             "9" = ordalistinn %>% filter(bekkur == 9) %>% dplyr::select("ord"),
+             "10" = ordalistinn %>% filter(bekkur == 10) %>% dplyr::select("ord")
+)
+ 
+save(ordalisti, ordalistinn, inntaksord, blokkir, data_fyrri,data_seinni, cvBekkir, file = "MMS gagnasafn lokaskjal.RData")
+```
+ 
+ 
+# Greining á orðum
+ 
+Í áttunda bekk er spurning hvort Kristin(n) eigi að vera með einu eða tveimur ennum??
+ 
+Orðið "sveitinni" í fjórða bekk er rétt í tilviki þess að númer atriðis er tíu, en þegar númer atriðis er 27 á rétta orðið að vera "íslenskan" en er þess í stað einnig kóðað sem "sveitinni". Vegna þess er því ákveðið að fjarlæga atriði númer 27 í fjórða bekk.
+ 
+Kom í ljós að hjá 84 nemendum voru settar villur fyrir rétt svör.
+ 
+Til að athuga hvaða villur eru að koma oftast fyrir, var ákveðið að laga kóðun í þeim tilvikum sem ekki er um villu að ræða.  
+ 
+Athuga villur eftir bekkjum
+ 
+```{r }
+yfirlit_rangt <- function(bekkur_nr ){
+ 
+ n_bekk <- function(nr_bekk){
+ data_fyrri %>%
+ filter(bekkur == nr_bekk) %>%
+ dplyr::select(kenni) %>%
+ unique() %>%
+ nrow() -> fjoldiNemenda
+ 
+}
+ 
+ fjoldiNemenda <- n_bekk(bekkur_nr)
+ 
+ data_fyrri %>%
+ mutate(fjoldiNemenda = fjoldiNemenda) %>%
+ filter(bekkur == bekkur_nr) %>%
+ filter(svar == 0) %>%
+ count(sp_ord, sv_ord, fjoldiNemenda) %>%
+ mutate(
+   fjoldiNemenda = round(n/fjoldiNemenda, 2),
+   Villutegund = c(" ")
+   ) %>%
+ rename(Atriði = sp_ord, `Svar nemenda` = sv_ord, Fjöldi = n, Hlutfall = fjoldiNemenda) %>%
+ dplyr::select(Atriði, `Svar nemenda`, Fjöldi, Hlutfall, Villutegund) %>%
+ filter(Hlutfall > 0.01) %>%
+ tbl_df()
+}
+ 
+ 
+yfirlit <- map(3:10, ~yfirlit_rangt(.x))
+```
+ 
+```{r}
+write.xlsx(yfirlit, "yfirlit.xlsx", sheetName = cvBekkir,
+ col.names = TRUE, append = FALSE)
+```
+ 
+# Atriðagreining
+ 
+```{r}
+atridagr_bekkir <- function(ordalisti_nr, bekkur_nr, data = data){
+data %>%
+ dplyr::select(kenni, bekkur, sp_ord, svar) %>%
+ filter(sp_ord %in% ordalisti[[ordalisti_nr]]$ord & bekkur == bekkur_nr) %>%
+ pivot_wider(names_from = sp_ord, values_from = svar) %>%
+ na.omit() -> atridagr
+ 
+itemAnal <- atridagr %>% mutate_all(~replace(., is.na(.), 0)) %>%
+ as.data.frame() %>%
+ split(.$bekkur) %>%
+ map(.,~.x%>%dplyr::select(-kenni,-bekkur)%>%itemAnalysis())
+ 
+item1 <- itemAnal[[1]]$itemReport
+item2 <- knitr::kable(itemAnal[[1]]$alpha, digits = 3)
+out <- list(item1, item2)
+out
+}
+atridagr_bekkir("3", 3, data = data_fyrri)
+atridagr_bekkir("4", 4, data = data_fyrri)
+atridagr_bekkir("5", 5, data = data_fyrri)
+atridagr_bekkir("6", 6, data = data_fyrri)
+atridagr_bekkir("7", 7, data = data_fyrri)
+atridagr_bekkir("8", 8, data = data_fyrri)
+atridagr_bekkir("9", 9, data = data_fyrri)
+atridagr_bekkir("10", 10, data = data_fyrri)
+atridagr_bekkir("3", 3, data = data_seinni)
+atridagr_bekkir("4", 4, data = data_seinni)
+atridagr_bekkir("5", 5, data = data_seinni)
+atridagr_bekkir("6", 6, data = data_seinni)
+atridagr_bekkir("7", 7, data = data_seinni)
+atridagr_bekkir("8", 8, data = data_seinni)
+atridagr_bekkir("9", 9, data = data_seinni)
+atridagr_bekkir("10", 10, data = data_seinni)
+ 
+```
+ 
+Atriðagreining blokkir
+ 
+```{r}
+atridagr_blokkir <- function(blokk_nr, data){
+data %>%
+ select(kenni, bekkur, sp_ord, svar) %>%
+ filter(sp_ord %in% blokkir[[blokk_nr]]) %>%
+ pivot_wider(names_from = sp_ord, values_from = svar) %>%
+ na.omit() -> atridagr_blokkir
+ 
+itemAnal <- atridagr_blokkir %>% mutate_all(~replace(., is.na(.), 0)) %>%
+ as.data.frame() %>%
+ split(.$bekkur) %>%
+ map(.,~.x%>%select(-kenni,-bekkur)%>%itemAnalysis())
+ 
+item1 <- map(1:2, ~knitr::kable(itemAnal[[.x]]$itemReport, digits = 3))
+item2 <- map(1:2, ~knitr::kable(itemAnal[[.x]]$alpha, digits = 3))
+listi <- list(item1, item2)
+listi
+}
+map(1:7, ~ atridagr_blokkir(.x, data = data_fyrri))
+```
+ 
+Athuga orð á milli ára
+ 
+```{r}
+skodaord <- function(bekkur_nr, data){
+ data %>%
+   filter(bekkur == bekkur_nr) %>%
+   mutate(bekkur = factor(bekkur)) %>%
+   group_by(bekkur) %>%
+   summarise(
+     Meðaltal = mean(svar, na.rm = T)
+            ) %>%
+   ggplot(aes(bekkur, Meðaltal)) +
+   ylim(c(0,1)) +
+   geom_col() -> plot
+ 
+}
+bekkjarskor_fyrri <- map(3:10, ~skodaord(.x, data = data_fyrri))
+bekkjarskor_seinni <- map(3:10, ~skodaord(.x, data = data_seinni))
+ggpubr::ggarrange(bekkjarskor_fyrri[[1]], bekkjarskor_fyrri[[2]], bekkjarskor_fyrri[[3]], bekkjarskor_fyrri[[4]], bekkjarskor_fyrri[[5]],  bekkjarskor_fyrri[[6]], bekkjarskor_fyrri[[7]], bekkjarskor_seinni[[8]])
+ggpubr::ggarrange(bekkjarskor_seinni[[1]], bekkjarskor_seinni[[2]], bekkjarskor_seinni[[3]], bekkjarskor_seinni[[4]], bekkjarskor_seinni[[5]],  bekkjarskor_seinni[[6]], bekkjarskor_seinni[[7]], bekkjarskor_seinni[[8]])
+```
+ 
+ 
+ 
+Athuga orðablokkir á milli ára
+ 
+```{r}
+skodablokkir <- function(bekkur_nr, data){
+ 
+ if(bekkur_nr == 4){
+   data %>%
+ filter(
+   bekkur %in% c(6,7),
+   sp_ord == blokkir[[bekkur_nr]]) %>%
+ mutate(bekkur = factor(bekkur)) %>%
+ group_by(bekkur) %>%
+ summarise(
+   Meðaltal = mean(svar, na.rm = T)
+ ) %>%
+ ggplot(aes(bekkur, Meðaltal)) +
+ ylim(c(0,1)) +
+   geom_col() -> plot
+   
+ } else{
+ data %>%
+ filter(sp_ord == blokkir[[bekkur_nr]]) %>%
+ mutate(bekkur = factor(bekkur)) %>%
+ group_by(bekkur) %>%
+ summarise(
+   Meðaltal = mean(svar, na.rm = T)
+ ) %>%
+ ggplot(aes(bekkur, Meðaltal)) +
+ ylim(c(0,1)) +
+   geom_col() -> plot
+ }
+}
+bekkjarskor_fyrri <- map(1:7, ~skodablokkir(.x, data = data_fyrri))
+bekkjarskor_seinni <- map(1:7, ~skodablokkir(.x, data = data_seinni))
+ggpubr::ggarrange(bekkjarskor_fyrri[[1]], bekkjarskor_fyrri[[2]], bekkjarskor_fyrri[[3]], bekkjarskor_fyrri[[4]], bekkjarskor_fyrri[[5]],  bekkjarskor_fyrri[[6]], bekkjarskor_fyrri[[7]])
+ggpubr::ggarrange(bekkjarskor_seinni[[1]], bekkjarskor_seinni[[2]], bekkjarskor_seinni[[3]], bekkjarskor_seinni[[4]], bekkjarskor_seinni[[5]],  bekkjarskor_seinni[[6]], bekkjarskor_seinni[[7]])
+ 
+```
+ 

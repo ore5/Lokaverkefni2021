@@ -1,0 +1,251 @@
+---
+title: "Prufa"
+author: "Ólöf Ragna"
+date: "10/22/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Undirbúa gögnin.
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+library(tidyverse)
+library(subscore)
+```
+4 subscores to be computed from 9, 9, 6, and 8 items
+4 subscore þýðir 4 undir kvarðar, næst eru 9 atriði inn í fyrsta subsettinu, svo aftur 9 í því næst og svo framvegis
+
+```{r}
+test.infor <- c(4,9,9,6,8)
+
+data <- TIMSS11G8M.data 
+
+test.data <- data.prep (data, test.infor)
+```
+
+Habermans aðferðin CTT
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+Subscores <- CTTsub(test.data, method = "Haberman")
+
+names(Subscores)
+
+Subscores$subscore.original
+
+Subscores$subscore.sx
+
+Subscores$summary
+
+Subscores$PRMSE
+
+```
+
+MIRT, með því að nota mirt pakkan í R
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+library(mirt)
+
+dim.structure <- 'number = 1-9
+                  algebra = 10-18
+                  geomatry = 19-24
+                  data.chance = 25-32'
+
+model <- mirt.model(dim.structure)
+
+mirt.result <- mirt(data, model, itemtype = "2PL", method = "QMCEM")
+
+theta.estimates <- fscores(mirt.result, full.scores = T, method = 'MAP', scores.only = TRUE, QMC = TRUE)
+
+mirt.result
+
+M2(mirt.result, QMC = TRUE)
+
+M2(mirt.result, QMC = T)
+
+personfit(mirt.result, QMC = TRUE, method = "EAP", Theta = NULL, stats.only = TRUE)
+```
+
+Subscore með lavaan.
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+library(lavaan)
+
+four.factor.model <- "number =~ Q1+Q2+Q3+Q4+Q5+Q6+Q7+Q8+Q9
+                      algebra =~ Q10+Q11+Q12+Q13+Q14+Q15+Q16+Q17+Q18+Q19
+                      geometry =~ Q19+Q20+Q21+Q22+Q23+Q24
+                      data.chance =~ Q25+Q26+Q27+Q28+Q29+Q30+Q31+Q32"
+
+fit.four.factor <- cfa(four.factor.model, data = data, mimic = "mplus")
+factor.scores <- predict (fit.four.factor)
+factor.scores
+
+summary(fit.four.factor, fit.measures = T)
+```
+
+
+
+
+
+
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+library(tidyverse)
+library(subscore)
+library(CTT)
+library(stats)
+library(irtoys)
+library(sirt)
+library(ltm)
+library(cocor)
+library(boot)
+theme_set(theme_light())
+```
+
+This function estimates true subscores using methods introduced in studies of Haberman (2008) and Wainer et al. (2001). 
+Hypothesis tests (i.e., Olkin’ Z,Williams’s t, and Hedges-Olkin’s Z) are used to determine whether a subscore or an augmented subscore has added value. Codes for the hypothesis tests are from Sinharay (2019) 
+```{r}
+# Transfering original scored data to a list format
+# that can be used in other functions.
+test.data<-data.prep(scored.data,c(3,15,15,20),
+c("Algebra","Geometry","Measurement", "Math"))
+#----------------------------------------------
+# Estimating subscores using Haberman's methods
+CTTsub(test.data,method="Haberman") # Estimating subscores using Haberman's methods
+# Obtaining original correlation for the three methods
+CTTsub(test.data,method="Haberman")$Correlation
+# Obtaining disattenuated correlation for the three methods
+CTTsub(test.data,method="Haberman")$Disattenuated.correlation
+# Obtaining PRMSEs for the three methods
+CTTsub(test.data,method="Haberman")$PRMSE
+# Obtaining descriptive statistics summary for estimated subscores
+CTTsub(test.data,method="Haberman")$summary
+# Obtaining raw subscores
+CTTsub(test.data,method="Haberman")$subscore.original
+# Obtaining subscores that are estimated as a function of the observed subscores
+CTTsub(test.data,method="Haberman")$subscore.s
+# Obtaining subscores that are estimated as a function of the observed total score
+CTTsub(test.data,method="Haberman")$subscore.x
+# Obtaining subscores that are estimated as a function of
+# both the observed subscores and the observed total score.
+CTTsub(test.data,method="Haberman")$subscore.sx
+#-------------------------------------------
+# Estimating subscores using Wainer's method
+CTTsub(test.data,method="Wainer")
+# Obtaining descriptive statistics summary for subscores
+CTTsub(test.data,method="Wainer")$summary
+# Obtaining original subscores
+CTTsub(test.data,method="Wainer")$subscore.original
+# Obtaining subscores that are estimated using Wainer's augmentation method
+CTTsub(test.data,method="Wainer")$subscore.augmented
+
+```
+
+This function generates a list of datasets using the scored original dataset, which can be used as objects in subscore computing functions.
+
+```{r}
+subtest.infor<-c(3,15,15,20)
+subtest.names<-c("Algebra","Geometry","Measurement", "Math")
+# This math test consists of 3 subtests, which have 15 algebra
+#items, 15 geometry items, and 20 measurement items.
+test.data<-data.prep(scored.data,subtest.infor,subtest.names)
+```
+
+This dataset contains responses of 150 examinees to three subscales. These subscales consist of 15, 15, and 20 items respectively.
+Details:
+A dataset containing responses of 150 examinees to a total number of 50 items on three subscales (15, 15, 20 items respectively).
+
+```{r}
+#read data
+data(scored.data)
+str(scored.data) 
+plot(scored.data) 
+```
+
+This function computes Cronback’s Alpha and Stratified Alpha. Disattenuated correlations are also provided.
+
+```{r}
+# Transfering scored response data to the requried list format
+test.data<-data.prep(scored.data,c(3,15,15,20),
+c("Algebra","Geometry","Measurement", "Math"))
+#Estimate true subscores using Hamerman's method based on observed subscores
+subscore.corr(test.data)
+subscore.s(test.data)$summary
+subscore.s(test.data)$correlation
+```
+
+This function estimate true subscores based on observed subscores, using the method introduced by Haberman (2008)
+
+```{r}
+# Transfering scored response data to the requried list format
+test.data<-data.prep(scored.data,c(3,15,15,20),
+c("Algebra","Geometry","Measurement", "Math"))
+#Estimate true subscores using Hamerman's method based on observed subscores
+subscore.s(test.data)
+subscore.s(test.data)$summary
+subscore.s(test.data)$Correlation
+subscore.s(test.data)$Disattenuated.correlation
+subscore.s(test.data)$PRMSE
+subscore.s(test.data)$subscore.s
+```
+
+This function estimate true subscores based on both observed stotal scores and observed subscores using the method introduced by Haberman (2008)
+
+```{r}
+test.data<-data.prep(scored.data,c(3,15,15,20),
+c("Algebra","Geometry","Measurement", "Math"))
+subscore.sx(test.data)
+subscore.s(test.data)$Correlation
+subscore.s(test.data)$Disattenuated.correlation
+subscore.sx(test.data)$summary
+subscore.sx(test.data)$PRMSE
+subscore.sx(test.data)$subscore.sx
+```
+
+This function estimates subscores using Wainer’s augmentation method (Wainer et. al., 2001). The central idea of this procedure is that, the estimation of subscores will be improved by shrinking the individual observed subscores towards some aggregate values (i.e., group mean subscores). 
+
+The extent of the shrinkage depends on the closeness of the subscale being estimated with other subscales as well as reliabilities of all the subscales. Wainer’s augmentation is a multivariate version of Kelly’s formula (Kelly, 1947). For details of Wainer’s augmentation subscoring method, please refer to Wainer et al. (2001)
+
+```{r}
+test.data<-data.prep(scored.data,c(3,15,15,20),
+c("Algebra","Geometry","Measurement", "Math"))
+subscore.Wainer(test.data)
+subscore.Wainer(test.data)$summary
+subscore.Wainer(test.data)$subscore.augmented
+```
+
+This function estimates true subscores based on observed total scores using the method introduced by Haberman (2008)
+
+```{r}
+test.data<-data.prep(scored.data,c(3,15,15,20),
+c("Algebra","Geometry","Measurement", "Math"))
+subscore.x(test.data)
+subscore.x(test.data)$summary
+subscore.x(test.data)$PRMSE
+subscore.x(test.data)$Correlation
+subscore.x(test.data)$Disattenuated.correlation
+subscore.x(test.data)$subscore.x
+```
+
+This list consists of four objects. The first three objects are item responses on the three subscales (algebra, geometry, and measurement). The fourth object is the response data on the total test.
+
+Algebra : Responses of 150 participants to 15 items; Geometry: Responses of 150 participants to 15 items. Measurement: Responses of 150 participants to 20 items; Math: Responses of 150 participants to 20 items.
+
+```{r}
+TIMSS11G8M.data
+test.data<-data.prep(scored.data,c(3,15,15,20),
+c("Algebra","Geometry","Measurement", "Math"))
+Yen.OPI(test.data)
+Yen.OPI(test.data)$summary
+Yen.OPI(test.data)$OPI
+
+```
+
+This function calculates Yen’s Q3 statistics (Yen, 1984; 1993) for unidimensional Rasch, 1-, 2-, and 3-PL logistic IRT models to assess the local independence assumption.
+
+
+```{r}
+Yen.Q3(scored.data,IRT.model="2pl")
+Yen.Q3(scored.data)$Q3
+Yen.Q3(scored.data)$Q3.weighted
+```
+
+

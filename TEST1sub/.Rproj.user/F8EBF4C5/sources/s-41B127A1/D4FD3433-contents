@@ -1,0 +1,1128 @@
+---
+title: "IRT greining blokka"
+author: "Ólöf Ragna Einars"
+date: "8/13/2020"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message= FALSE, warning = FALSE, dev = "svg")
+library(tidyverse)
+library(knitr)
+library(ltm)
+library(kableExtra)
+library(ggpubr)
+
+theme_set(theme_light())
+load("MMS gagnasafn lokaskjal.RData")
+```
+
+## Yfirlit blokka
+
+```{r}
+skodablokkir <- function(bekkur_nr){
+  
+  if(bekkur_nr == 4){
+    data_fyrri %>% 
+  filter(
+    bekkur %in% c(6,7),
+    sp_ord == blokkir[[bekkur_nr]]) %>%
+  mutate(bekkur = factor(bekkur)) %>%
+  group_by(bekkur) %>%
+  summarise(
+    Meðaltal = mean(svar, na.rm = T)
+  ) %>%
+  ggplot(aes(bekkur, Meðaltal)) +
+    geom_col() -> plot
+    
+  } else{
+  data_fyrri %>% 
+  filter(sp_ord == blokkir[[bekkur_nr]]) %>%
+  mutate(bekkur = factor(bekkur)) %>%
+  group_by(bekkur) %>%
+  summarise(
+    Meðaltal = mean(svar, na.rm = T)
+  ) %>%
+  ggplot(aes(bekkur, Meðaltal)) +
+    geom_col() -> plot
+  }
+}
+bekkjarskor <- map(1:7, ~skodablokkir(.x))
+ggpubr::ggarrange(bekkjarskor[[1]], bekkjarskor[[2]], bekkjarskor[[3]], bekkjarskor[[4]], bekkjarskor[[5]],  bekkjarskor[[6]], bekkjarskor[[7]])
+```
+
+***Mynd 1 - Myndin sýnir meðaltal réttra orða milli bekkja*** 
+
+Eins og við sjáum hér á þessari mynd þá er í öllum tilfellum eldra árið í blokkinni að svara hlutfallslega oftar rétt orðunum sem spurt er fyrir um í blokkinni.
+
+Það er samt mjög lítill munur á milli blokka í einhverjum tilfellum.
+
+### **Blokkir þriðja og fjórða bekkjar.**
+
+```{r}
+#trebekkur--------------
+data_fyrri %>%
+    filter(bekkur == 3) %>% 
+    filter(sp_ord %in% blokkir[[1]])-> datatrebekkur
+
+datatrebekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from = sp_ord, values_from = svar) %>% 
+  na.omit -> datatrebekkur 
+
+#firebkkur--------------
+data_fyrri %>%
+    filter(bekkur == 4) %>% 
+    filter(sp_ord %in% blokkir[[1]]) -> datafirebkkur
+
+datafirebkkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from = sp_ord, values_from = svar) %>% 
+  na.omit -> datafirebkkur
+
+par(datafirebkkur)
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- datatrebekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+```
+
+```{r Setja upp likan fyrir trebekkur, echo = FALSE, warning =  FALSE}
+datatrebekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatatrebekkur
+
+fit_trebekkur <- ltm(IRTdatatrebekkur ~ z1, IRT.param = TRUE)
+
+sum_trebekkur <- summary(fit_trebekkur)
+
+#coef
+sum_trebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:6) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_trebekkur
+
+sum_trebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(7:12) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_trebekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_trebekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_trebekkur, svÞ_trebekkur, data_longblokk) %>% 
+  dplyr::select(Orð, Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_trebekkur
+```
+
+```{r}
+datafirebkkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatafirebkkur
+
+fit_firebkkur <- ltm(IRTdatafirebkkur ~ z1, IRT.param = TRUE)
+
+sum_firebkkur <- summary(fit_firebkkur)
+
+#coef
+sum_firebkkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:6) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_firebkkur
+
+sum_firebkkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(7:12) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_firebkkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_firebkkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_firebkkur, svÞ_firebkkur, data_longblokk) %>% 
+  dplyr::select(Orð, Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_firebkkur
+
+```
+
+Myndirnar hér að neðan sýna svarferla orða hjá þriðja og fjórða bekk.
+
+Ferlarnir sýna líkur á því að skrifa orðið sem spurt er um rétt eftir færni próftaka. 
+
+Þyngdarstuðullinn segir til um staðsetningu þessara ferla á x-ásnum (lengra til hægri = þyngri spurning) á meðan aðgreiningarstuðullinn segir til um halla þeirra (meiri halli = meiri aðgreining).
+
+Við sjáum að þyngd flestra spurninga liggur á bilinu -1.5 til 0, og að aðgreining er sömuleiðis mest á því bili. 
+
+Öll þau orð sem lögð voru fyrir í blokk þriðja og fjórða bekk eru með eða yfir meðal-aðgreiningu. 
+ 
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_trebekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "3. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+plot(fit_firebkkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = "Færni", 
+    y = " ",
+    caption = "4. bekkur"
+    ) +
+  xlim(-3,3) -> plot2
+
+ggarrange(plot1, plot2, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+**Mynd 2.** ***Myndin sýnir svarferla orða 3. og 4. bekkjar***
+
+**Tafla 1.** ***3.bekkur - Taflan sýnir Aðgreiningu og þyngd atriðana í blokkinni og staðalvillu(Sv) atriða***
+```{r}
+#Coef tafla 3. bekkur
+coef_trebekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped")
+```
+
+**Tafla 2.** ***4.bekkur - Taflan sýnir Aðgreiningu og þyngd atriðana í blokkinni og staðalvillu(Sv)***
+```{r}
+#Coef tafla 4.bekkur
+coef_firebkkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped") 
+
+```
+
+#### Upplýsingakúrfur orða 3. og 4. bekkjar.
+
+Hér að neðan er mynd sem sýnir upplýsingakúrfur orðanna í blokkinni fyrir þriðja og fjórða bekk. Þær sýna framlag spurninga til prófsins. 
+
+Spurningar með upplýsingakúrfur þar sem toppur fer yfir 0,2 þykja ásættanlegar.
+Spurningar með topp í kringum 1 þykja góðar.
+
+Nokkur orð blokkarinnar þykja samkvæmt þessu ágætar eða góðar með tilliti til upplýsingamagns. Við sjáum að tvær skaga uppúr dreifingunni hjá báðum bekkjum, þetta eru orðin ***hlakka*** og ***hratt***. hin orðin eru ekki að veita eins miklar upplýsingar.
+
+```{r}
+plot(fit_trebekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:6), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 3. bekkjar")
+```
+
+**Mynd 2.** ***Myndin sýnir upplýsingakúrfu orða 3. bekkjar***
+
+```{r}
+plot(fit_firebkkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:6), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 4. bekkjar")
+```
+
+**Mynd 3.** ***Myndin sýnir upplýsingakúrfu orða 4. bekkjar***
+
+### Upplýsingarkúrfa blokkar 3. og 4. bekkjar
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_trebekkur <- plot(fit_trebekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_firebkkur <- plot(fit_firebkkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_trebekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "3.bekkur") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,7)) +
+  xlab(expression(theta)) -> info_trebekkur
+```
+**Mynd 4.** ***Myndin sýnir upplýsingakúrfu blokkar 3. bekkjar***
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_firebkkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "4.bekkur") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,7)) +
+  xlab(expression(theta)) -> info_firebkkur
+
+#upplýsingar
+ggpubr::ggarrange(info_trebekkur,info_firebkkur)
+
+```
+
+**Mynd 5.** ***Myndin sýnir upplýsingakúrfu blokkar 4. bekkjar***
+
+```{r}
+coef_trebekkur %>% 
+  dplyr::rename(
+    Þyngd = Dffclt,
+    Aðgreining = Dscrmn 
+  ) %>% 
+  dplyr::select(-"Sv") -> Coefplottrebekkur
+
+Coefplottrebekkur %>% 
+  ggplot(aes(x = Þyngd, y = Aðgreining, label = rownames(Coefplottrebekkur) )) +
+  geom_point() +
+  geom_text(hjust = 0, nudge_x = 0.05) +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,3.6))
+
+```
+
+**Mynd 6.** ***Myndin sýnir aðgreiningu og þyngdar orða í blokk 3. bekkjar***
+
+```{r}
+coef_firebkkur %>% 
+  dplyr::rename(
+    Þyngd = Dffclt,
+    Aðgreining = Dscrmn 
+  ) %>% 
+  dplyr::select(-"Sv") -> Coefplotfirebkkur
+
+Coefplotfirebkkur %>% 
+  ggplot(aes(x = Þyngd, y = Aðgreining, label = rownames(Coefplotfirebkkur) )) +
+  geom_point() +
+  geom_text(hjust = 0, nudge_x = 0.05) +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,3.5))
+
+```
+
+**Mynd 6.** ***Myndin sýnir aðgreiningu og þyngdar orða í blokk 4. bekkjar***
+
+
+
+### **Blokkir fjórða og fimmta bekkjar.**
+
+```{r}
+#firebekkur--------------
+data_fyrri %>%
+    filter(bekkur == 4) %>% 
+    filter(sp_ord %in% blokkir[[2]])-> datafirebekkur
+
+datafirebekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from = sp_ord, values_from = svar) %>% 
+  na.omit -> datafirebekkur 
+
+#fembkkur--------------
+data_fyrri %>%
+    filter(bekkur == 5) %>% 
+    filter(sp_ord %in% blokkir[[2]]) -> datafembkkur
+
+datafembkkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from = sp_ord, values_from = svar) %>% 
+  na.omit -> datafembkkur
+
+par(datafembkkur)
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- datafirebekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+```
+
+```{r Setja upp likan fyrir firebekkur, echo = FALSE, warning =  FALSE}
+datafirebekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatafirebekkur
+
+fit_firebekkur <- ltm(IRTdatafirebekkur ~ z1, IRT.param = TRUE)
+
+sum_firebekkur <- summary(fit_firebekkur)
+
+#coef
+sum_firebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:6) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_firebekkur
+
+sum_firebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(7:12) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_firebekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_firebekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_firebekkur, svÞ_firebekkur, data_longblokk) %>% 
+  dplyr::select(Orð, Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_firebekkur
+```
+
+```{r}
+datafembkkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatafembkkur
+
+fit_fembkkur <- ltm(IRTdatafembkkur ~ z1, IRT.param = TRUE)
+
+sum_fembkkur <- summary(fit_fembkkur)
+
+#coef
+sum_fembkkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:6) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_fembkkur
+
+sum_fembkkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(7:12) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_fembkkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_fembkkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_fembkkur, svÞ_fembkkur, data_longblokk) %>% 
+  dplyr::select(Orð, Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_fembkkur
+
+```
+
+Myndirnar hér að neðan sýna svarferla orða hjá fjórða og fimmta bekk.
+
+Ferlarnir sýna líkur á því að skrifa orðið sem spurt er um rétt eftir færni próftaka. 
+
+Þyngdarstuðullinn segir til um staðsetningu þessara ferla á x-ásnum (lengra til hægri = þyngri spurning) á meðan aðgreiningarstuðullinn segir til um halla þeirra (meiri halli = meiri aðgreining).
+
+Við sjáum að þyngd flestra spurninga liggur á bilinu -1.5 til 0, og að aðgreining er sömuleiðis mest á því bili. 
+
+Öll þau orð sem lögð voru fyrir í blokk þriðja og fjórða bekk eru með eða yfir meðal-aðgreiningu. 
+ 
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_firebekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "3. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+plot(fit_fembkkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = "Færni", 
+    y = " ",
+    caption = "4. bekkur"
+    ) +
+  xlim(-3,3) -> plot2
+
+ggarrange(plot1, plot2, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+**Mynd 2.** ***Myndin sýnir svarferla orða 4. og 5. bekkjar***
+
+**Tafla 1.** ***4.bekkur - Taflan sýnir Aðgreiningu og þyngd atriðana í blokkinni og staðalvillu(Sv) atriða***
+```{r}
+#Coef tafla 3. bekkur
+coef_firebekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped")
+```
+
+**Tafla 2.** ***5.bekkur - Taflan sýnir Aðgreiningu og þyngd atriðana í blokkinni og staðalvillu(Sv)***
+```{r}
+#Coef tafla 4.bekkur
+coef_fembkkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped") 
+
+```
+
+#### Upplýsingakúrfur orða 4. og 5. bekkjar.
+
+Hér að neðan er mynd sem sýnir upplýsingakúrfur orðanna í blokkinni fyrir fjórða og fimmta bekk. Þær sýna framlag spurninga til prófsins. 
+
+Spurningar með upplýsingakúrfur þar sem toppur fer yfir 0,2 þykja ásættanlegar.
+Spurningar með topp í kringum 1 þykja góðar.
+
+Nokkur orð blokkarinnar þykja samkvæmt þessu ágætar eða góðar með tilliti til upplýsingamagns. Við sjáum að tvær skaga uppúr dreifingunni hjá báðum bekkjum, þetta eru orðin *** *** og *** ***. hin orðin eru ekki að veita eins miklar upplýsingar.
+
+```{r}
+plot(fit_firebekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:6), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 3. bekkjar")
+```
+
+**Mynd 2.** ***Myndin sýnir upplýsingakúrfu orða 4. bekkjar***
+
+```{r}
+plot(fit_fembkkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:6), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 4. bekkjar")
+```
+
+**Mynd 3.** ***Myndin sýnir upplýsingakúrfu orða 5. bekkjar***
+
+### Upplýsingarkúrfa blokkar 4. og 5. bekkjar
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_firebekkur <- plot(fit_firebekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_fembkkur <- plot(fit_fembkkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_firebekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "3.bekkur") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,7)) +
+  xlab(expression(theta)) -> info_firebekkur
+```
+**Mynd 4.** ***Myndin sýnir upplýsingakúrfu blokkar 4. bekkjar***
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_fembkkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "4.bekkur") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,7)) +
+  xlab(expression(theta)) -> info_fembkkur
+
+#upplýsingar
+ggpubr::ggarrange(info_firebekkur,info_fembkkur)
+
+```
+
+**Mynd 5.** ***Myndin sýnir upplýsingakúrfu blokkar 5. bekkjar***
+
+```{r}
+coef_firebekkur %>% 
+  dplyr::rename(
+    Þyngd = Dffclt,
+    Aðgreining = Dscrmn 
+  ) %>% 
+  dplyr::select(-"Sv") -> Coefplotfirebekkur
+
+Coefplotfirebekkur %>% 
+  ggplot(aes(x = Þyngd, y = Aðgreining, label = rownames(Coefplotfirebekkur) )) +
+  geom_point() +
+  geom_text(hjust = 0, nudge_x = 0.05) +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,3.6))
+
+```
+
+**Mynd 6.** ***Myndin sýnir aðgreiningu og þyngdar orða í blokk 4. bekkjar***
+
+```{r}
+coef_fembkkur %>% 
+  dplyr::rename(
+    Þyngd = Dffclt,
+    Aðgreining = Dscrmn 
+  ) %>% 
+  dplyr::select(-"Sv") -> Coefplotfembkkur
+
+Coefplotfembkkur %>% 
+  ggplot(aes(x = Þyngd, y = Aðgreining, label = rownames(Coefplotfembkkur) )) +
+  geom_point() +
+  geom_text(hjust = 0, nudge_x = 0.05) +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,3.5))
+
+```
+
+**Mynd 7.** ***Myndin sýnir aðgreiningu og þyngdar orða í blokk 5. bekkjar***
+
+### **Blokkir fimmta og sjötta bekkjar.**
+
+```{r}
+#fembekkur--------------
+data_fyrri %>%
+    filter(bekkur == 5) %>% 
+    filter(sp_ord %in% blokkir[[3]])-> datafembekkur
+
+datafembekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from = sp_ord, values_from = svar) %>% 
+  na.omit -> datafembekkur 
+
+#seksbkkur--------------
+data_fyrri %>%
+    filter(bekkur == 6) %>% 
+    filter(sp_ord %in% blokkir[[3]]) -> dataseksbkkur
+
+dataseksbkkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from = sp_ord, values_from = svar) %>% 
+  na.omit -> dataseksbkkur
+
+par(dataseksbkkur)
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- datafembekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+```
+
+```{r Setja upp likan fyrir fembekkur, echo = FALSE, warning =  FALSE}
+datafembekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatafembekkur
+
+fit_fembekkur <- ltm(IRTdatafembekkur ~ z1, IRT.param = TRUE)
+
+sum_fembekkur <- summary(fit_fembekkur)
+
+#coef
+sum_fembekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:5) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_fembekkur
+
+sum_fembekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(6:11) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_fembekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_fembekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_fembekkur, svÞ_fembekkur, data_longblokk) %>% 
+  dplyr::select(Orð, Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_fembekkur
+```
+
+```{r}
+dataseksbkkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdataseksbkkur
+
+fit_seksbkkur <- ltm(IRTdataseksbkkur ~ z1, IRT.param = TRUE)
+
+sum_seksbkkur <- summary(fit_seksbkkur)
+
+#coef
+sum_seksbkkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:5) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_seksbkkur
+
+sum_seksbkkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(6:11) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_seksbkkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_seksbkkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_seksbkkur, svÞ_seksbkkur, data_longblokk) %>% 
+  dplyr::select(Orð, Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_seksbkkur
+
+```
+
+Myndirnar hér að neðan sýna svarferla orða hjá fimmta og sjötta bekk.
+
+Ferlarnir sýna líkur á því að skrifa orðið sem spurt er um rétt eftir færni próftaka. 
+
+Þyngdarstuðullinn segir til um staðsetningu þessara ferla á x-ásnum (lengra til hægri = þyngri spurning) á meðan aðgreiningarstuðullinn segir til um halla þeirra (meiri halli = meiri aðgreining).
+
+Við sjáum að þyngd flestra spurninga liggur á bilinu -1.5 til 0, og að aðgreining er sömuleiðis mest á því bili. 
+
+Öll þau orð sem lögð voru fyrir í blokk fimmta og sjötta bekk eru með eða yfir meðal-aðgreiningu. ??????????????
+ 
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_fembekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "3. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+plot(fit_seksbkkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = "Færni", 
+    y = " ",
+    caption = "4. bekkur"
+    ) +
+  xlim(-3,3) -> plot2
+
+ggarrange(plot1, plot2, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+**Mynd 2.** ***Myndin sýnir svarferla orða 5. og 6. bekkjar***
+
+**Tafla 1.** ***5.bekkur - Taflan sýnir Aðgreiningu og þyngd atriðana í blokkinni og staðalvillu(Sv) atriða***
+```{r}
+#Coef tafla 5. bekkur
+coef_fembekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped")
+```
+
+**Tafla 2.** ***6.bekkur - Taflan sýnir Aðgreiningu og þyngd atriðana í blokkinni og staðalvillu(Sv)***
+```{r}
+#Coef tafla 6.bekkur
+coef_seksbkkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped") 
+
+```
+
+#### Upplýsingakúrfur orða 5. og 6. bekkjar.
+
+Hér að neðan er mynd sem sýnir upplýsingakúrfur orðanna í blokkinni fyrir fimmta og sjötta bekk. Þær sýna framlag spurninga til prófsins. 
+
+Spurningar með upplýsingakúrfur þar sem toppur fer yfir 0,2 þykja ásættanlegar.
+Spurningar með topp í kringum 1 þykja góðar.
+
+Nokkur orð blokkarinnar þykja samkvæmt þessu ágætar eða góðar með tilliti til upplýsingamagns. Við sjáum að tvær skaga uppúr dreifingunni hjá báðum bekkjum, þetta eru orðin *** *** og *** ***. hin orðin eru ekki að veita eins miklar upplýsingar.
+
+```{r}
+plot(fit_fembekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:5), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 3. bekkjar")
+```
+
+**Mynd 2.** ***Myndin sýnir upplýsingakúrfu orða 4. bekkjar***
+
+```{r}
+plot(fit_seksbkkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:5), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 4. bekkjar")
+```
+
+**Mynd 3.** ***Myndin sýnir upplýsingakúrfu orða 5. bekkjar***
+
+### Upplýsingarkúrfa blokkar 5. og 6. bekkjar
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_fembekkur <- plot(fit_fembekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_seksbkkur <- plot(fit_seksbkkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_fembekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "5.bekkur") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,7)) +
+  xlab(expression(theta)) -> info_fembekkur
+```
+**Mynd 4.** ***Myndin sýnir upplýsingakúrfu blokkar 5. bekkjar***
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_seksbkkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "6.bekkur") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,7)) +
+  xlab(expression(theta)) -> info_seksbkkur
+
+#upplýsingar
+ggpubr::ggarrange(info_fembekkur,info_seksbkkur)
+
+```
+
+**Mynd 5.** ***Myndin sýnir upplýsingakúrfu blokkar 6. bekkjar***
+
+```{r}
+coef_fembekkur %>% 
+  dplyr::rename(
+    Þyngd = Dffclt,
+    Aðgreining = Dscrmn 
+  ) %>% 
+  dplyr::select(-"Sv") -> Coefplotfembekkur
+
+Coefplotfembekkur %>% 
+  ggplot(aes(x = Þyngd, y = Aðgreining, label = rownames(Coefplotfembekkur) )) +
+  geom_point() +
+  geom_text(hjust = 0, nudge_x = 0.05) +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,3.6))
+
+```
+
+**Mynd 6.** ***Myndin sýnir aðgreiningu og þyngdar orða í blokk 5. bekkjar***
+
+```{r}
+coef_seksbkkur %>% 
+  dplyr::rename(
+    Þyngd = Dffclt,
+    Aðgreining = Dscrmn 
+  ) %>% 
+  dplyr::select(-"Sv") -> Coefplotseksbkkur
+
+Coefplotseksbkkur %>% 
+  ggplot(aes(x = Þyngd, y = Aðgreining, label = rownames(Coefplotseksbkkur) )) +
+  geom_point() +
+  geom_text(hjust = 0, nudge_x = 0.05) +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,3.5))
+
+```
+
+**Mynd 7.** ***Myndin sýnir aðgreiningu og þyngdar orða í blokk 6. bekkjar***
+
+### **Blokkir sjötta og sjöunda bekkjar.**
+
+```{r}
+#seksbekkur--------------
+data_fyrri %>%
+    filter(bekkur == 6) %>% 
+    filter(sp_ord %in% blokkir[[4]])-> dataseksbekkur
+
+dataseksbekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from = sp_ord, values_from = svar) %>% 
+  na.omit -> dataseksbekkur 
+
+#syvbkkur--------------
+data_fyrri %>%
+    filter(bekkur == 7) %>% 
+    filter(sp_ord %in% blokkir[[4]]) -> datasyvbkkur
+
+datasyvbkkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from = sp_ord, values_from = svar) %>% 
+  na.omit -> datasyvbkkur
+
+par(datasyvbkkur)
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- dataseksbekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+```
+
+```{r Setja upp likan fyrir seksbekkur, echo = FALSE, warning =  FALSE}
+dataseksbekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdataseksbekkur
+
+fit_seksbekkur <- ltm(IRTdataseksbekkur ~ z1, IRT.param = TRUE)
+
+sum_seksbekkur <- summary(fit_seksbekkur)
+
+#coef
+sum_seksbekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:6) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_seksbekkur
+
+sum_seksbekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(6:11) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_seksbekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_seksbekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_seksbekkur, svÞ_seksbekkur, data_longblokk) %>% 
+  dplyr::select(Orð, Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_seksbekkur
+```
+
+```{r}
+datasyvbkkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatasyvbkkur
+
+fit_syvbkkur <- ltm(IRTdatasyvbkkur ~ z1, IRT.param = TRUE)
+
+sum_syvbkkur <- summary(fit_syvbkkur)
+
+#coef
+sum_syvbkkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:6) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_syvbkkur
+
+sum_syvbkkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(6:11) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_syvbkkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_syvbkkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_syvbkkur, svÞ_syvbkkur, data_longblokk) %>% 
+  dplyr::select(Orð, Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_syvbkkur
+
+```
+
+Myndirnar hér að neðan sýna svarferla orða hjá fimmta og sjötta bekk.
+
+Ferlarnir sýna líkur á því að skrifa orðið sem spurt er um rétt eftir færni próftaka. 
+
+Þyngdarstuðullinn segir til um staðsetningu þessara ferla á x-ásnum (lengra til hægri = þyngri spurning) á meðan aðgreiningarstuðullinn segir til um halla þeirra (meiri halli = meiri aðgreining).
+
+Við sjáum að þyngd flestra spurninga liggur á bilinu -1.5 til 0, og að aðgreining er sömuleiðis mest á því bili. 
+
+Öll þau orð sem lögð voru fyrir í blokk fimmta og sjötta bekk eru með eða yfir meðal-aðgreiningu. ??????????????
+ 
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_seksbekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "3. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+plot(fit_syvbkkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = "Færni", 
+    y = " ",
+    caption = "4. bekkur"
+    ) +
+  xlim(-3,3) -> plot2
+
+ggarrange(plot1, plot2, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+**Mynd 2.** ***Myndin sýnir svarferla orða 5. og 6. bekkjar***
+
+**Tafla 1.** ***5.bekkur - Taflan sýnir Aðgreiningu og þyngd atriðana í blokkinni og staðalvillu(Sv) atriða***
+```{r}
+#Coef tafla 5. bekkur
+coef_seksbekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped")
+```
+
+**Tafla 2.** ***6.bekkur - Taflan sýnir Aðgreiningu og þyngd atriðana í blokkinni og staðalvillu(Sv)***
+```{r}
+#Coef tafla 6.bekkur
+coef_syvbkkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped") 
+
+```
+
+#### Upplýsingakúrfur orða 5. og 6. bekkjar.
+
+Hér að neðan er mynd sem sýnir upplýsingakúrfur orðanna í blokkinni fyrir fimmta og sjötta bekk. Þær sýna framlag spurninga til prófsins. 
+
+Spurningar með upplýsingakúrfur þar sem toppur fer yfir 0,2 þykja ásættanlegar.
+Spurningar með topp í kringum 1 þykja góðar.
+
+Nokkur orð blokkarinnar þykja samkvæmt þessu ágætar eða góðar með tilliti til upplýsingamagns. Við sjáum að tvær skaga uppúr dreifingunni hjá báðum bekkjum, þetta eru orðin *** *** og *** ***. hin orðin eru ekki að veita eins miklar upplýsingar.
+
+```{r}
+plot(fit_seksbekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:5), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 3. bekkjar")
+```
+
+**Mynd 2.** ***Myndin sýnir upplýsingakúrfu orða 4. bekkjar***
+
+```{r}
+plot(fit_syvbkkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:5), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 4. bekkjar")
+```
+
+**Mynd 3.** ***Myndin sýnir upplýsingakúrfu orða 5. bekkjar***
+
+### Upplýsingarkúrfa blokkar 5. og 6. bekkjar
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_seksbekkur <- plot(fit_seksbekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_syvbkkur <- plot(fit_syvbkkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_seksbekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "3.bekkur") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,7)) +
+  xlab(expression(theta)) -> info_seksbekkur
+```
+**Mynd 4.** ***Myndin sýnir upplýsingakúrfu blokkar 5. bekkjar***
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_syvbkkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "4.bekkur") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,7)) +
+  xlab(expression(theta)) -> info_syvbkkur
+
+#upplýsingar
+ggpubr::ggarrange(info_seksbekkur,info_syvbkkur)
+
+```
+
+**Mynd 5.** ***Myndin sýnir upplýsingakúrfu blokkar 6. bekkjar***
+
+```{r}
+coef_seksbekkur %>% 
+  dplyr::rename(
+    Þyngd = Dffclt,
+    Aðgreining = Dscrmn 
+  ) %>% 
+  dplyr::select(-"Sv") -> Coefplotseksbekkur
+
+Coefplotseksbekkur %>% 
+  ggplot(aes(x = Þyngd, y = Aðgreining, label = rownames(Coefplotseksbekkur) )) +
+  geom_point() +
+  geom_text(hjust = 0, nudge_x = 0.05) +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,3.6))
+
+```
+
+**Mynd 6.** ***Myndin sýnir aðgreiningu og þyngdar orða í blokk 5. bekkjar***
+
+```{r}
+coef_syvbkkur %>% 
+  dplyr::rename(
+    Þyngd = Dffclt,
+    Aðgreining = Dscrmn 
+  ) %>% 
+  dplyr::select(-"Sv") -> Coefplotsyvbkkur
+
+Coefplotsyvbkkur %>% 
+  ggplot(aes(x = Þyngd, y = Aðgreining, label = rownames(Coefplotsyvbkkur) )) +
+  geom_point() +
+  geom_text(hjust = 0, nudge_x = 0.05) +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,3.5))
+
+```
+
+### **Blokkir sjöunda og áttunda bekkjar.**
+
+
+### **Blokkir áttunda og níunda bekkjar.**
+
+
+### **Blokkir níunda og tíunda bekkjar.**
+
+
+
+
+

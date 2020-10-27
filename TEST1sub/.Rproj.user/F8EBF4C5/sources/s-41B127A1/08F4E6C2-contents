@@ -1,0 +1,800 @@
+---
+title: "IRTbekkirTVO"
+author: "Ólöf Ragna"
+date: "9/14/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message= FALSE, warning = FALSE, dev = "svg")
+library(tidyverse)
+library(knitr)
+library(ltm)
+library(kableExtra)
+library(tidyr)
+library(ggpubr)
+
+theme_set(theme_light())
+load("MMS gagnasafn lokaskjal.RData")
+```
+
+# IRT greining fyrri
+## 3. bekkur
+```{r}
+#trebekkur--------------
+data_seinni %>%
+    filter(bekkur == 3) -> datatrebekkur
+
+datatrebekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from =  sp_ord, values_from = svar) %>% 
+  na.omit -> datatrebekkur
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- datatrebekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+
+```
+
+```{r}
+datatrebekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatatrebekkur
+
+fit_trebekkur <- ltm(IRTdatatrebekkur ~ z1, IRT.param = TRUE)
+
+sum_trebekkur <- summary(fit_trebekkur)
+```
+
+
+```{r}
+#coef
+sum_trebekkur$coefficient %>% 
+  as.data.frame()%>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:30) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_trebekkur
+
+sum_trebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(31:60) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_trebekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_trebekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_trebekkur, svÞ_trebekkur) %>% 
+  dplyr::select(Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_trebekkur
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_trebekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "3. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+ggarrange(plot1, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+
+```{r}
+#Coef tafla 3. bekkur
+coef_trebekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped") -> coef10
+clipr::write_clip(coef10)
+```
+
+```{r}
+plot(fit_trebekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:30), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 3. bekkjar")
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_trebekkur <- plot(fit_trebekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_trebekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "Upplýsingar prófs 3.bekkjar í heild sinni") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,17)) +
+  xlab(expression(theta)) -> info_trebekkur
+info_trebekkur
+```
+
+# IRT- greining fyrri 
+## 5.Bekkur
+
+```{r}
+#trebekkur--------------
+data_seinni %>%
+    filter(bekkur == 5) -> datatrebekkur
+
+datatrebekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from =  sp_ord, values_from = svar) %>% 
+  na.omit -> datatrebekkur
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- datatrebekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+
+```
+
+```{r}
+datatrebekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatatrebekkur
+
+fit_trebekkur <- ltm(IRTdatatrebekkur ~ z1, IRT.param = TRUE)
+
+sum_trebekkur <- summary(fit_trebekkur)
+```
+
+```{r}
+#coef
+sum_trebekkur$coefficient %>% 
+  as.data.frame()%>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:30) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_trebekkur
+
+sum_trebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(31:60) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_trebekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_trebekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_trebekkur, svÞ_trebekkur) %>% 
+  dplyr::select(Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_trebekkur
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_trebekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "5. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+ggarrange(plot1, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+
+```{r}
+#Coef tafla 3. bekkur
+coef_trebekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped")
+```
+
+```{r}
+plot(fit_trebekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:30), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 5. bekkjar")
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_trebekkur <- plot(fit_trebekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_trebekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "Upplýsingar prófs 5.bekkjar í heild sinni") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,13)) +
+  xlab(expression(theta)) -> info_trebekkur
+info_trebekkur
+```
+
+# IRT- greining fyrri 
+## 6.Bekkur
+
+```{r}
+#trebekkur--------------
+data_seinni %>%
+    filter(bekkur == 6) -> datatrebekkur
+
+datatrebekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from =  sp_ord, values_from = svar) %>% 
+  na.omit -> datatrebekkur
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- datatrebekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+
+```
+
+```{r}
+datatrebekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatatrebekkur
+
+fit_trebekkur <- ltm(IRTdatatrebekkur ~ z1, IRT.param = TRUE)
+
+sum_trebekkur <- summary(fit_trebekkur)
+```
+
+```{r}
+#coef
+sum_trebekkur$coefficient %>% 
+  as.data.frame()%>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:30) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_trebekkur
+
+sum_trebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(31:60) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_trebekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_trebekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_trebekkur, svÞ_trebekkur) %>% 
+  dplyr::select(Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_trebekkur
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_trebekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "6. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+ggarrange(plot1, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+
+```{r}
+#Coef tafla 6. bekkur
+coef_trebekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped") 
+```
+
+```{r}
+plot(fit_trebekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:30), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 6. bekkjar")
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_trebekkur <- plot(fit_trebekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_trebekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "Upplýsingar prófs 6.bekkjar í heild sinni") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,13)) +
+  xlab(expression(theta)) -> info_trebekkur
+info_trebekkur
+```
+
+# IRT- greining fyrri 
+## 7.Bekkur
+
+```{r}
+#trebekkur--------------
+data_seinni %>%
+    filter(bekkur == 7) -> datatrebekkur
+
+datatrebekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from =  sp_ord, values_from = svar) %>% 
+  na.omit -> datatrebekkur
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- datatrebekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+
+```
+
+```{r}
+datatrebekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatatrebekkur
+
+fit_trebekkur <- ltm(IRTdatatrebekkur ~ z1, IRT.param = TRUE)
+
+sum_trebekkur <- summary(fit_trebekkur)
+```
+
+```{r}
+#coef
+sum_trebekkur$coefficient %>% 
+  as.data.frame()%>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:30) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_trebekkur
+
+sum_trebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(31:60) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_trebekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_trebekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_trebekkur, svÞ_trebekkur) %>% 
+  dplyr::select(Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_trebekkur
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_trebekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "7. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+ggarrange(plot1, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+
+```{r}
+#Coef tafla 7. bekkur
+coef_trebekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped")
+```
+
+```{r}
+plot(fit_trebekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:30), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 7. bekkjar")
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_trebekkur <- plot(fit_trebekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_trebekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "Upplýsingar prófs 7.bekkjar í heild sinni") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,13)) +
+  xlab(expression(theta)) -> info_trebekkur
+info_trebekkur
+```
+
+# IRT- greining fyrri 
+## 8.Bekkur
+
+```{r}
+#trebekkur--------------
+data_seinni %>%
+    filter(bekkur == 8) -> datatrebekkur
+
+datatrebekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from =  sp_ord, values_from = svar) %>% 
+  na.omit -> datatrebekkur
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- datatrebekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+
+```
+
+```{r}
+datatrebekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatatrebekkur
+
+fit_trebekkur <- ltm(IRTdatatrebekkur ~ z1, IRT.param = TRUE)
+
+sum_trebekkur <- summary(fit_trebekkur)
+```
+
+```{r}
+#coef
+sum_trebekkur$coefficient %>% 
+  as.data.frame()%>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:30) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_trebekkur
+
+sum_trebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(31:60) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_trebekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_trebekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_trebekkur, svÞ_trebekkur) %>% 
+  dplyr::select(Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_trebekkur
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_trebekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "8. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+ggarrange(plot1, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+
+```{r}
+#Coef tafla 3. bekkur
+coef_trebekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped")
+```
+
+```{r}
+plot(fit_trebekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:30), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 8. bekkjar")
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_trebekkur <- plot(fit_trebekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_trebekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "Upplýsingar prófs 8.bekkjar í heild sinni") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,13)) +
+  xlab(expression(theta)) -> info_trebekkur
+info_trebekkur
+```
+
+# IRT- greining fyrri 
+## 9.Bekkur
+
+```{r}
+#trebekkur--------------
+data_seinni %>%
+    filter(bekkur == 9) -> datatrebekkur
+
+datatrebekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from =  sp_ord, values_from = svar) %>% 
+  na.omit -> datatrebekkur
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- datatrebekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+
+```
+
+```{r}
+datatrebekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatatrebekkur
+
+fit_trebekkur <- ltm(IRTdatatrebekkur ~ z1, IRT.param = TRUE)
+
+sum_trebekkur <- summary(fit_trebekkur)
+```
+
+```{r}
+#coef
+sum_trebekkur$coefficient %>% 
+  as.data.frame()%>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:30) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_trebekkur
+
+sum_trebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(31:60) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_trebekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_trebekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_trebekkur, svÞ_trebekkur) %>% 
+  dplyr::select(Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_trebekkur
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_trebekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "9. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+ggarrange(plot1, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+
+```{r}
+#Coef tafla 3. bekkur
+coef_trebekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped")
+```
+
+```{r}
+plot(fit_trebekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:30), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 9. bekkjar")
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_trebekkur <- plot(fit_trebekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_trebekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "Upplýsingar prófs 9.bekkjar í heild sinni") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,13)) +
+  xlab(expression(theta)) -> info_trebekkur
+info_trebekkur
+```
+
+# IRT- greining fyrri 
+## 10.Bekkur
+
+```{r}
+#trebekkur--------------
+data_seinni %>%
+    filter(bekkur == 10) -> datatrebekkur
+
+datatrebekkur %>% 
+  dplyr::select(kenni, bekkur, svar, sp_ord) %>% 
+  pivot_wider(names_from =  sp_ord, values_from = svar) %>% 
+  na.omit -> datatrebekkur
+
+#draga orðin út sem eru í blokkinni og setja í gagnaramma.
+data_longblokk <- datatrebekkur %>% 
+  dplyr::select(-bekkur) %>% 
+  pivot_longer(-kenni, names_to = "Orð", values_to = "Svar") %>% 
+  dplyr::select(Orð) %>% 
+  unique()
+
+```
+
+```{r}
+datatrebekkur %>% 
+  dplyr::select(-bekkur,-kenni) -> IRTdatatrebekkur
+
+fit_trebekkur <- ltm(IRTdatatrebekkur ~ z1, IRT.param = TRUE)
+
+sum_trebekkur <- summary(fit_trebekkur)
+```
+
+```{r}
+#coef
+sum_trebekkur$coefficient %>% 
+  as.data.frame()%>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(1:30) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv ` = std.err) -> svÞ_trebekkur
+
+sum_trebekkur$coefficient %>% 
+  as.data.frame() %>% 
+  dplyr::select(std.err) %>% 
+  rownames_to_column("C1") %>% 
+  slice(31:60) %>% 
+  dplyr::select(std.err) %>% 
+  rename(`Sv` = std.err) -> svA_trebekkur
+
+#sækja upplýsingar til þess að gera töfluna
+coef(fit_trebekkur) %>% 
+  as.data.frame() %>%
+  add_column(svA_trebekkur, svÞ_trebekkur) %>% 
+  dplyr::select(Dscrmn, Sv, Dffclt, `Sv `) %>%
+  arrange(Dffclt) -> coef_trebekkur
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+# plot ------------------------------------------------------------
+plot(fit_trebekkur, type = "ICC", plot = FALSE) %>% 
+  as.data.frame() %>% 
+  pivot_longer(-z, names_to = "Orð", values_to = "Value") %>%   arrange(Orð) %>% 
+  ggplot(aes(x = z, y = Value, fill = Orð)) +
+  geom_line(aes(color = Orð), size = 1) +
+  theme(legend.position = "none") + 
+  labs(
+    x = " ", 
+    y = "Hlutfall",
+    caption = "10. bekkur"
+    ) +
+  xlim(-3,3) -> plot1
+
+ggarrange(plot1, ncol = 1, common.legend = TRUE, legend = "right")
+
+```
+
+```{r}
+#Coef tafla 10. bekkur
+coef_trebekkur %>%
+  rename(
+        Aðgreining = Dscrmn,
+        Þyngd = Dffclt
+        ) %>%
+  knitr::kable(digits = 2, align = "c") %>% 
+  kable_styling("striped") 
+```
+
+```{r}
+plot(fit_trebekkur, type = 'IIC',  xlab = "Færni", ylab = "Upplýsingar", items = c(1:30), ylim = c(-0.2,3), main = "Uppýsingakúrfur orða 10. bekkjar")
+```
+
+```{r, fig.width = 10, fig.height = 7, echo = FALSE}
+plot_info_trebekkur <- plot(fit_trebekkur, type = "IIC", items = 0, plot = FALSE)
+
+plot_info_trebekkur %>%
+  as.data.frame() %>%
+  ggplot(aes(z, info)) +
+  geom_line(color = "steelblue") +
+  geom_hline(yintercept = 1, color = "red") +
+  labs(y = "Upplýsingar", title = "Upplýsingar prófs 10.bekkjar í heild sinni") +
+  xlim(c(-2.5,2.5)) +
+  ylim(c(0,13)) +
+  xlab(expression(theta)) -> info_trebekkur
+info_trebekkur
+```
+
+
+# Villur 
+
+ 
+```{r}
+villuMynd <- function(bekkur_nr, data, gagnasafn){
+ 
+data %>% filter(bekkur == bekkur_nr) %>% dplyr::select(kenni) %>% unique() -> fjoldi
+data %>%
+  filter(bekkur == bekkur_nr & svar == 0) %>%
+  count(sp_ord, sv_ord, sort = T) %>%
+  mutate(
+    n = n/nrow(fjoldi)
+    ) %>%
+  head(30) %>%
+  ggplot(aes(reorder(sp_ord, n, sum), n, fill = sv_ord, label = sv_ord)) +
+  geom_col(position = position_dodge2(padding = 0.2)) +
+  theme(legend.position = "none") +
+  coord_flip() +
+  geom_text(
+    hjust = -0.5,
+    position = position_dodge(width = 1),
+    inherit.aes = TRUE
+  ) +
+  labs(
+    title = paste0("Villur í ", bekkur_nr, ". bekk."),
+    y = "Hlutfall",
+    x = "Rétt orð",
+    caption = paste0("Súlurnar tákna algengustu villur í hverju orði. Fjöldi nemenda: ", nrow(fjoldi),". Þessi mynd fjallar um ", gagnasafn, " fyrirlögn")
+    ) +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 20), limits = c(0,1))
+ 
+}
+map(3:10, ~ villuMynd(.x, data = data_seinni, gagnasafn = "fyrri"))
+map(3:10, ~ villuMynd(.x, data = data_seinni, gagnasafn = "seinni"))
+ 
+```

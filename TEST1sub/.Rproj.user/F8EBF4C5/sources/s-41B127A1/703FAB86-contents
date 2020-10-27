@@ -1,0 +1,50 @@
+load("MMS gagnasafn Unnar og Ólöf.RData")
+library(tidyverse)
+library(readxl)    
+
+read_excel_allsheets <- function(filename, tibble = FALSE) {
+  # I prefer straight data.frames
+  # but if you like tidyverse tibbles (the default with read_excel)
+  # then just pass tibble = TRUE
+  sheets <- readxl::excel_sheets(filename)
+  x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X))
+  if(!tibble) x <- lapply(x, as.data.frame)
+  names(x) <- sheets
+  x
+}
+
+dataList <- read_excel_allsheets("xlskjal.xlsx")
+
+dataList[[5]] %>% 
+  mutate_at(
+    vars(Orð:Málsgreinar), replace_na, 0
+           ) -> trebekkur_villutegundir
+trebekkur_villutegundir %>% glimpse()
+
+trebekkur_villutegundir %>% 
+  dplyr::select(-c(2:5)) %>%
+  .[-31,] %>%
+  rename(sp_ord = Orð) -> trebekkur_villutegundir
+
+data %>% filter(bekkur == 7) %>% dplyr::select(kenni) %>% unique() -> fjoldi
+data %>% 
+  filter(bekkur == 7 & svar == 0) %>% 
+  count(sp_ord, sv_ord, sort = T) %>%
+  mutate(
+    n = n/nrow(fjoldi)
+  ) %>%
+  head(20) -> villur_trebekkur
+
+
+
+
+
+
+data_read <- merge(villur_trebekkur, trebekkur_villutegundir, by = "sp_ord")
+
+
+data_read %>% 
+  arrange(desc(n)) %>%
+  clipr::write_clip()
+
+
