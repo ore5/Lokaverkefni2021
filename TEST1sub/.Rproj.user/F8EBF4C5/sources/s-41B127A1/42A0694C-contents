@@ -62,8 +62,6 @@ M2(mirt.result, QMC = TRUE)
 M2(mirt.result, QMC = T)
 
 personfit(mirt.result, QMC = TRUE, method = "EAP", Theta = NULL, stats.only = TRUE)
-
-
 ```
 
 Subscore með lavaan.
