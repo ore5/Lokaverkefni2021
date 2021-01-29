@@ -384,9 +384,9 @@ Adata %&gt;%
   spread(var, val) -&gt; isl04a</code></pre>
 <pre><code>## `summarise()` regrouping output by &#39;id&#39;, &#39;test_id&#39;, &#39;test&#39; (override with `.groups` argument)</code></pre>
 <pre class="r"><code>isl04a &lt;- isl04a[, -(1:3)] %&gt;%
-  dplyr::select (ends_with(c(&quot;lea&quot;,&quot;leb&quot;,&quot;lec&quot;,&quot;led&quot;,&quot;mnc&quot;,&quot;mne&quot;,&quot;mnd&quot;)))
+  dplyr::select (ends_with(c(&quot;lea&quot;,&quot;leb&quot;,&quot;lec&quot;,&quot;led&quot;,&quot;lee&quot; ,&quot;mnc&quot;,&quot;mne&quot;,&quot;mnd&quot;)))
 
-isl04a &lt;- isl04a[, (1:36)]</code></pre>
+isl04a &lt;- isl04a[, (1:40)]</code></pre>
 <p>Þegar framkvæmd er IRT greining, koma prófskor í formi latent ability (eða theta) sem eru fengnar með tilteknu MIRT modeli. Við munum notast við pakkan mirt (Chalmers, 2020) í R. mirt pakkinn hefur möguleikan á að notast við mismunandi matsaðferðir eins og <strong>expectation-maximization (EM)</strong>, <strong>Quasi-Monte Carlo EM</strong>, <strong>Metropolis-Hasting Robbins-Monro</strong> og <strong>Cock and Lieberman</strong>.</p>
 <p>MIRT, Setja upp líkanið.</p>
 <pre class="r"><code>#sæki mirt pakkann
@@ -397,53 +397,57 @@ library(mirt)</code></pre>
 <pre class="r"><code>#Set upp þáttabygginguna
 atridi &lt;- &#39;LEB = 1-15
            LEC = 16-31
-           LED = 32-36&#39;
+           LED = 32-36
+           LEE = 37-40&#39;
 #geri hlut sem að getur tekið við modelinu seinna í ferlinu
 model &lt;- mirt.model(atridi)</code></pre>
-<p>Ákvörðun um hvaða pakka skildi nota við úrvinnsluna var tekin út frá því hvaða estimation method við vildum nota og út frá uppbyggingu gagnanna, og samvkæmt Chalmers(2020) er <em>EM</em> aðferðin hentug fyrir 1-3 þætti og svo einnig út frá því að gögnin innihalda fjölkosta atriði.</p>
+<p>Ákvörðun um hvaða pakka skildi nota við úrvinnsluna var tekin út frá því hvaða estimation method við vildum nota og út frá uppbyggingu gagnanna, og samvkæmt Chalmers(2020) er <em>QMCEM</em> aðferðin hentug fyrir fleiri en þrjá þætti og svo einnig út frá því að gögnin innihalda fjölkosta atriði.</p>
 <pre class="r"><code># nú þegar gögnin og uppsettning modelsins er tilbúin, er hægt að gera greininguna
 
-#fit-a þriggja þáttalíkan 3-PL, 3PL vegna þess að gögnin eru fjölkosta, EM vegna þess að við erum með þriggja þáttalíkan
+#fit-a þriggja þáttalíkan 3-PL, 3PL vegna þess að gögnin eru fjölkosta, QMCEM vegna þess að við erum með fjögurra þáttalíkan
 
-mirt.result &lt;- mirt(isl04a, model, itemtype = &quot;3PL&quot;, TOL = .0005, method = &quot;EM&quot;)</code></pre>
+mirt.result &lt;- mirt(isl04a, model, itemtype = &quot;3PL&quot;, TOL = .0005, method = &quot;QMCEM&quot;)</code></pre>
 <pre><code>## 
-Iteration: 1, Log-Lik: -243797.872, Max-Change: 2.84178
-Iteration: 2, Log-Lik: -241629.794, Max-Change: 0.53144
-Iteration: 3, Log-Lik: -240827.877, Max-Change: 0.36150
-Iteration: 4, Log-Lik: -240435.823, Max-Change: 0.34487
-Iteration: 5, Log-Lik: -240197.710, Max-Change: 0.30937
-Iteration: 6, Log-Lik: -240043.829, Max-Change: 0.18912
-Iteration: 7, Log-Lik: -239949.536, Max-Change: 0.15670
-Iteration: 8, Log-Lik: -239889.132, Max-Change: 0.13987
-Iteration: 9, Log-Lik: -239849.320, Max-Change: 0.12348
-Iteration: 10, Log-Lik: -239822.379, Max-Change: 0.14402
-Iteration: 11, Log-Lik: -239803.018, Max-Change: 0.15875
-Iteration: 12, Log-Lik: -239789.225, Max-Change: 0.15633
-Iteration: 13, Log-Lik: -239779.415, Max-Change: 0.13121
-Iteration: 14, Log-Lik: -239772.509, Max-Change: 0.12709
-Iteration: 15, Log-Lik: -239767.695, Max-Change: 0.16607
-Iteration: 16, Log-Lik: -239764.141, Max-Change: 0.04612
-Iteration: 17, Log-Lik: -239761.053, Max-Change: 0.13371
-Iteration: 18, Log-Lik: -239759.434, Max-Change: 0.02704
-Iteration: 19, Log-Lik: -239758.749, Max-Change: 0.02881
-Iteration: 20, Log-Lik: -239757.580, Max-Change: 0.13922
-Iteration: 21, Log-Lik: -239756.599, Max-Change: 0.01054
-Iteration: 22, Log-Lik: -239756.528, Max-Change: 0.11510
-Iteration: 23, Log-Lik: -239755.932, Max-Change: 0.10049
-Iteration: 24, Log-Lik: -239755.510, Max-Change: 0.03439
-Iteration: 25, Log-Lik: -239755.365, Max-Change: 0.04650
-Iteration: 26, Log-Lik: -239755.142, Max-Change: 0.00596
-Iteration: 27, Log-Lik: -239755.067, Max-Change: 0.00574
-Iteration: 28, Log-Lik: -239754.999, Max-Change: 0.00227
-Iteration: 29, Log-Lik: -239754.960, Max-Change: 0.04481
-Iteration: 30, Log-Lik: -239754.831, Max-Change: 0.03897
-Iteration: 31, Log-Lik: -239754.663, Max-Change: 0.00828
-Iteration: 32, Log-Lik: -239754.439, Max-Change: 0.00631
-Iteration: 33, Log-Lik: -239754.415, Max-Change: 0.00224
-Iteration: 34, Log-Lik: -239754.403, Max-Change: 0.03071
-Iteration: 35, Log-Lik: -239754.324, Max-Change: 0.00181
-Iteration: 36, Log-Lik: -239754.317, Max-Change: 0.00055
-Iteration: 37, Log-Lik: -239754.316, Max-Change: 0.00047</code></pre>
+Iteration: 1, Log-Lik: -273825.948, Max-Change: 2.99423
+Iteration: 2, Log-Lik: -271322.262, Max-Change: 0.56642
+Iteration: 3, Log-Lik: -270427.155, Max-Change: 0.36827
+Iteration: 4, Log-Lik: -270003.636, Max-Change: 0.35242
+Iteration: 5, Log-Lik: -269755.686, Max-Change: 0.31062
+Iteration: 6, Log-Lik: -269599.790, Max-Change: 0.23559
+Iteration: 7, Log-Lik: -269491.672, Max-Change: 0.15370
+Iteration: 8, Log-Lik: -269423.387, Max-Change: 0.12652
+Iteration: 9, Log-Lik: -269378.512, Max-Change: 0.09883
+Iteration: 10, Log-Lik: -269349.972, Max-Change: 0.10411
+Iteration: 11, Log-Lik: -269331.270, Max-Change: 0.12382
+Iteration: 12, Log-Lik: -269318.736, Max-Change: 0.12940
+Iteration: 13, Log-Lik: -269309.891, Max-Change: 0.13026
+Iteration: 14, Log-Lik: -269303.623, Max-Change: 0.12243
+Iteration: 15, Log-Lik: -269298.991, Max-Change: 0.10590
+Iteration: 16, Log-Lik: -269295.652, Max-Change: 0.08534
+Iteration: 17, Log-Lik: -269293.176, Max-Change: 0.02965
+Iteration: 18, Log-Lik: -269290.619, Max-Change: 0.09431
+Iteration: 19, Log-Lik: -269289.050, Max-Change: 0.02613
+Iteration: 20, Log-Lik: -269287.967, Max-Change: 0.02645
+Iteration: 21, Log-Lik: -269287.380, Max-Change: 0.02094
+Iteration: 22, Log-Lik: -269286.457, Max-Change: 0.02769
+Iteration: 23, Log-Lik: -269286.288, Max-Change: 0.02482
+Iteration: 24, Log-Lik: -269286.118, Max-Change: 0.02584
+Iteration: 25, Log-Lik: -269286.404, Max-Change: 0.05202
+Iteration: 26, Log-Lik: -269285.178, Max-Change: 0.14404
+Iteration: 27, Log-Lik: -269284.848, Max-Change: 0.10513
+Iteration: 28, Log-Lik: -269284.631, Max-Change: 0.01940
+Iteration: 29, Log-Lik: -269283.991, Max-Change: 0.01552
+Iteration: 30, Log-Lik: -269283.927, Max-Change: 0.02659
+Iteration: 31, Log-Lik: -269283.784, Max-Change: 0.02890
+Iteration: 32, Log-Lik: -269283.670, Max-Change: 0.03148
+Iteration: 33, Log-Lik: -269283.555, Max-Change: 0.02815
+Iteration: 34, Log-Lik: -269283.222, Max-Change: 0.01031
+Iteration: 35, Log-Lik: -269283.003, Max-Change: 0.01524
+Iteration: 36, Log-Lik: -269282.920, Max-Change: 0.02744
+Iteration: 37, Log-Lik: -269282.660, Max-Change: 0.02377
+Iteration: 38, Log-Lik: -269282.546, Max-Change: 0.02544
+Iteration: 39, Log-Lik: -269282.448, Max-Change: 0.00824
+Iteration: 40, Log-Lik: -269282.441, Max-Change: 0.00049</code></pre>
 <pre class="r"><code># full.scores = if FALSE then a summary table with factor scores for each unique pattern is displayed
 
 #Obtain theta estimatis (subscores) via MAP estimations
@@ -454,8 +458,8 @@ theta.estimates &lt;- fscores(mirt.result, full.scores = F, method = &#39;MAP&#3
 ## 
 ## Empirical Reliability:
 ## 
-##    LEB    LEC    LED 
-## 0.7078 0.7293 0.4553</code></pre>
+##    LEB    LEC    LED    LEE 
+## 0.7079 0.7293 0.4559 0.3629</code></pre>
 </div>
 <div id="fscores" class="section level2">
 <h2>fscores</h2>
@@ -468,76 +472,250 @@ theta.estimates &lt;- fscores(mirt.result, full.scores = F, method = &#39;MAP&#3
 mirt.result</code></pre>
 <pre><code>## 
 ## Call:
-## mirt(data = isl04a, model = model, itemtype = &quot;3PL&quot;, method = &quot;EM&quot;, 
+## mirt(data = isl04a, model = model, itemtype = &quot;3PL&quot;, method = &quot;QMCEM&quot;, 
 ##     TOL = 5e-04)
 ## 
-## Full-information item factor analysis with 3 factor(s).
-## Converged within 5e-04 tolerance after 37 EM iterations.
+## Full-information item factor analysis with 4 factor(s).
+## Converged within 5e-04 tolerance after 40 QMCEM iterations.
 ## mirt version: 1.32.1 
 ## M-step optimizer: BFGS 
 ## EM acceleration: Ramsay 
-## Number of rectangular quadrature: 15
+## Number of quasi-Monte Carlo points: 5000
 ## Latent density type: Gaussian 
 ## 
-## Log-likelihood = -239754.3
-## Estimated parameters: 108 
-## AIC = 479724.6; AICc = 479726.8
-## BIC = 480513.9; SABIC = 480170.7
-## G2 (1e+10) = 274957.5, p = 1
+## Log-likelihood = -269282.4
+## Estimated parameters: 120 
+## AIC = 538804.9; AICc = 538807.5
+## BIC = 539681.8; SABIC = 539300.5
+## G2 (1e+10) = 333603.4, p = 1
 ## RMSEA = 0, CFI = NaN, TLI = NaN</code></pre>
+<pre class="r"><code>coef(mirt.result)</code></pre>
+<pre><code>## $sp_001_isl_leb
+##        a1 a2 a3 a4     d    g u
+## par 0.964  0  0  0 0.183 0.02 1
+## 
+## $sp_005_isl_leb
+##        a1 a2 a3 a4    d    g u
+## par 1.307  0  0  0 0.18 0.15 1
+## 
+## $sp_008_isl_leb
+##        a1 a2 a3 a4     d    g u
+## par 1.361  0  0  0 1.244 0.22 1
+## 
+## $sp_012_isl_leb
+##        a1 a2 a3 a4     d     g u
+## par 1.788  0  0  0 0.021 0.325 1
+## 
+## $sp_013_isl_leb
+##        a1 a2 a3 a4    d     g u
+## par 1.297  0  0  0 0.77 0.233 1
+## 
+## $sp_014_isl_leb
+##        a1 a2 a3 a4     d     g u
+## par 1.794  0  0  0 0.001 0.292 1
+## 
+## $sp_015_isl_leb
+##        a1 a2 a3 a4      d   g u
+## par 2.125  0  0  0 -2.533 0.2 1
+## 
+## $sp_019_isl_leb
+##       a1 a2 a3 a4     d     g u
+## par 1.17  0  0  0 0.251 0.147 1
+## 
+## $sp_029_isl_leb
+##        a1 a2 a3 a4      d     g u
+## par 2.081  0  0  0 -0.972 0.291 1
+## 
+## $sp_031_isl_leb
+##        a1 a2 a3 a4      d     g u
+## par 1.807  0  0  0 -2.058 0.374 1
+## 
+## $sp_032_isl_leb
+##        a1 a2 a3 a4      d     g u
+## par 0.366  0  0  0 -0.366 0.044 1
+## 
+## $sp_036_isl_leb
+##        a1 a2 a3 a4      d     g u
+## par 1.159  0  0  0 -0.981 0.202 1
+## 
+## $sp_038_isl_leb
+##        a1 a2 a3 a4      d     g u
+## par 1.701  0  0  0 -1.589 0.352 1
+## 
+## $sp_039_isl_leb
+##       a1 a2 a3 a4      d     g u
+## par 1.91  0  0  0 -0.978 0.195 1
+## 
+## $sp_043_isl_leb
+##        a1 a2 a3 a4      d     g u
+## par 1.388  0  0  0 -0.797 0.313 1
+## 
+## $sp_002_isl_lec
+##     a1    a2 a3 a4     d     g u
+## par  0 1.561  0  0 1.668 0.028 1
+## 
+## $sp_003_isl_lec
+##     a1    a2 a3 a4     d     g u
+## par  0 1.568  0  0 2.487 0.269 1
+## 
+## $sp_004_isl_lec
+##     a1    a2 a3 a4      d     g u
+## par  0 1.025  0  0 -1.677 0.266 1
+## 
+## $sp_006_isl_lec
+##     a1    a2 a3 a4     d     g u
+## par  0 1.392  0  0 0.526 0.149 1
+## 
+## $sp_007_isl_lec
+##     a1    a2 a3 a4     d     g u
+## par  0 1.745  0  0 1.413 0.144 1
+## 
+## $sp_011_isl_lec
+##     a1    a2 a3 a4     d     g u
+## par  0 1.686  0  0 2.654 0.146 1
+## 
+## $sp_016_isl_lec
+##     a1    a2 a3 a4    d     g u
+## par  0 0.971  0  0 0.31 0.094 1
+## 
+## $sp_017_isl_lec
+##     a1    a2 a3 a4     d     g u
+## par  0 1.874  0  0 0.504 0.295 1
+## 
+## $sp_018_isl_lec
+##     a1   a2 a3 a4      d     g u
+## par  0 0.05  0  0 -0.098 0.008 1
+## 
+## $sp_025_isl_lec
+##     a1    a2 a3 a4     d     g u
+## par  0 0.311  0  0 0.202 0.018 1
+## 
+## $sp_026_isl_lec
+##     a1    a2 a3 a4     d     g u
+## par  0 0.561  0  0 0.224 0.034 1
+## 
+## $sp_027_isl_lec
+##     a1    a2 a3 a4      d     g u
+## par  0 1.942  0  0 -0.467 0.358 1
+## 
+## $sp_030_isl_lec
+##     a1    a2 a3 a4      d     g u
+## par  0 2.085  0  0 -1.334 0.409 1
+## 
+## $sp_033_isl_lec
+##     a1   a2 a3 a4     d     g u
+## par  0 1.68  0  0 -1.33 0.238 1
+## 
+## $sp_035_isl_lec
+##     a1    a2 a3 a4     d     g u
+## par  0 1.908  0  0 -0.65 0.311 1
+## 
+## $sp_037_isl_lec
+##     a1    a2 a3 a4     d     g u
+## par  0 2.299  0  0 -1.87 0.389 1
+## 
+## $sp_009_isl_led
+##     a1 a2    a3 a4      d     g u
+## par  0  0 1.258  0 -0.153 0.592 1
+## 
+## $sp_028_isl_led
+##     a1 a2    a3 a4      d     g u
+## par  0  0 1.644  0 -0.282 0.362 1
+## 
+## $sp_040_isl_led
+##     a1 a2    a3 a4      d     g u
+## par  0  0 1.036  0 -1.254 0.313 1
+## 
+## $sp_041_isl_led
+##     a1 a2    a3 a4     d     g u
+## par  0  0 1.129  0 0.718 0.071 1
+## 
+## $sp_042_isl_led
+##     a1 a2    a3 a4    d     g u
+## par  0  0 1.727  0 0.78 0.077 1
+## 
+## $sp_010_isl_lee
+##     a1 a2 a3    a4      d     g u
+## par  0  0  0 1.132 -1.383 0.247 1
+## 
+## $sp_020_isl_lee
+##     a1 a2 a3    a4      d     g u
+## par  0  0  0 0.765 -0.192 0.138 1
+## 
+## $sp_034_isl_lee
+##     a1 a2 a3    a4      d     g u
+## par  0  0  0 1.697 -1.415 0.142 1
+## 
+## $sp_044_isl_lee
+##     a1 a2 a3    a4      d     g u
+## par  0  0  0 2.077 -1.101 0.386 1
+## 
+## $GroupPars
+##     MEAN_1 MEAN_2 MEAN_3 MEAN_4 COV_11 COV_21 COV_31 COV_41 COV_22 COV_32
+## par      0      0      0      0      1      0      0      0      1      0
+##     COV_42 COV_33 COV_43 COV_44
+## par      0      1      0      1</code></pre>
 <p>M2 - gefur global model fit stuðla, og M2 statistic (Maydeu-Olivares &amp; Joe, 2006) sem og aðra fit-stuðla, eins og root mean square error of approximation (RMSEA) &lt;.05 merkrir gott fit, Tucker-Lewis Index (TLI) &lt;.90 merkir ásættanlegt fit og svo Comparative fit index (CFI) &lt;.90 merkir ásættanlegt fit</p>
 <pre class="r"><code>#obtein global model-data fit indies, including m2(sem er vinsæll fit index þegar notaið er MIRT) and TLI, CFI that are based on fitting the null model.
 # spyrja út í - QMC sem er notað fyrir HIGH-DIMENSIONAL MODELS
 M2(mirt.result)</code></pre>
+<pre><code>## Warning: High-dimensional models should use quasi-Monte Carlo integration. Pass
+## QMC=TRUE</code></pre>
 <pre><code>##             M2  df p      RMSEA    RMSEA_5   RMSEA_95     SRMSR       TLI
-## stats 15521.28 558 0 0.04931594 0.04864604 0.04998453 0.1064727 0.8643938
+## stats 24457.18 700 0 0.05548038 0.05488262 0.05607537 0.1102548 0.8246726
 ##             CFI
-## stats 0.8798916</code></pre>
+## stats 0.8426549</code></pre>
 <p>Itemfit- niðurstöðurnar</p>
 <pre class="r"><code>#Item fit indices.
 itemfit(mirt.result)</code></pre>
+<pre><code>## Warning: High-dimensional models should use quasi-Monte Carlo integration. Pass
+## QMC=TRUE</code></pre>
 <pre><code>##              item    S_X2 df.S_X2 RMSEA.S_X2 p.S_X2
-## 1  sp_001_isl_leb  93.448      27      0.015  0.000
-## 2  sp_005_isl_leb  32.405      26      0.005  0.180
-## 3  sp_008_isl_leb  66.623      28      0.011  0.000
-## 4  sp_012_isl_leb  29.132      27      0.003  0.355
-## 5  sp_013_isl_leb  39.964      27      0.007  0.052
-## 6  sp_014_isl_leb  28.703      27      0.002  0.375
-## 7  sp_015_isl_leb 159.905      27      0.021  0.000
-## 8  sp_019_isl_leb  43.869      27      0.008  0.021
-## 9  sp_029_isl_leb  35.707      26      0.006  0.097
-## 10 sp_031_isl_leb 100.762      28      0.015  0.000
-## 11 sp_032_isl_leb 100.938      28      0.015  0.000
-## 12 sp_036_isl_leb  88.224      27      0.014  0.000
-## 13 sp_038_isl_leb  89.640      28      0.014  0.000
-## 14 sp_039_isl_leb  58.272      26      0.011  0.000
-## 15 sp_043_isl_leb  49.298      28      0.008  0.008
-## 16 sp_002_isl_lec 109.799      26      0.017  0.000
-## 17 sp_003_isl_lec  83.821      27      0.014  0.000
-## 18 sp_004_isl_lec  87.019      27      0.014  0.000
-## 19 sp_006_isl_lec  35.441      26      0.006  0.102
-## 20 sp_007_isl_lec 104.240      27      0.016  0.000
-## 21 sp_011_isl_lec 106.397      27      0.016  0.000
-## 22 sp_016_isl_lec  27.932      27      0.002  0.414
-## 23 sp_017_isl_lec  50.981      27      0.009  0.003
-## 24 sp_018_isl_lec 179.650      28      0.022  0.000
-## 25 sp_025_isl_lec 150.473      28      0.020  0.000
-## 26 sp_026_isl_lec  57.506      28      0.010  0.001
-## 27 sp_027_isl_lec  29.954      27      0.003  0.316
-## 28 sp_030_isl_lec  70.108      28      0.012  0.000
-## 29 sp_033_isl_lec  53.239      27      0.009  0.002
-## 30 sp_035_isl_lec  58.750      27      0.010  0.000
-## 31 sp_037_isl_lec  82.113      28      0.013  0.000
-## 32 sp_009_isl_led 201.992      30      0.023  0.000
-## 33 sp_028_isl_led 456.019      29      0.037  0.000
-## 34 sp_040_isl_led 128.001      28      0.018  0.000
-## 35 sp_041_isl_led 210.938      29      0.024  0.000
-## 36 sp_042_isl_led 717.650      28      0.047  0.000</code></pre>
+## 1  sp_001_isl_leb 112.028      29      0.016  0.000
+## 2  sp_005_isl_leb  64.589      30      0.010  0.000
+## 3  sp_008_isl_leb  99.779      30      0.015  0.000
+## 4  sp_012_isl_leb  41.401      29      0.006  0.064
+## 5  sp_013_isl_leb  54.155      31      0.008  0.006
+## 6  sp_014_isl_leb  49.666      30      0.008  0.013
+## 7  sp_015_isl_leb 312.317      30      0.029  0.000
+## 8  sp_019_isl_leb  73.152      30      0.011  0.000
+## 9  sp_029_isl_leb  38.845      30      0.005  0.129
+## 10 sp_031_isl_leb 173.306      30      0.021  0.000
+## 11 sp_032_isl_leb 158.655      31      0.019  0.000
+## 12 sp_036_isl_leb 147.228      31      0.018  0.000
+## 13 sp_038_isl_leb 107.523      30      0.015  0.000
+## 14 sp_039_isl_leb  54.321      29      0.009  0.003
+## 15 sp_043_isl_leb  87.116      30      0.013  0.000
+## 16 sp_002_isl_lec 121.040      29      0.017  0.000
+## 17 sp_003_isl_lec 116.899      29      0.017  0.000
+## 18 sp_004_isl_lec 115.640      31      0.016  0.000
+## 19 sp_006_isl_lec  46.002      30      0.007  0.031
+## 20 sp_007_isl_lec  95.917      29      0.014  0.000
+## 21 sp_011_isl_lec 150.662      29      0.020  0.000
+## 22 sp_016_isl_lec  46.699      30      0.007  0.027
+## 23 sp_017_isl_lec  56.313      29      0.009  0.002
+## 24 sp_018_isl_lec 253.835      32      0.025  0.000
+## 25 sp_025_isl_lec 212.724      32      0.023  0.000
+## 26 sp_026_isl_lec  97.753      31      0.014  0.000
+## 27 sp_027_isl_lec  50.914      30      0.008  0.010
+## 28 sp_030_isl_lec  66.655      30      0.011  0.000
+## 29 sp_033_isl_lec  62.242      30      0.010  0.000
+## 30 sp_035_isl_lec  51.212      30      0.008  0.009
+## 31 sp_037_isl_lec  77.062      30      0.012  0.000
+## 32 sp_009_isl_led 188.284      32      0.021  0.000
+## 33 sp_028_isl_led 433.215      32      0.034  0.000
+## 34 sp_040_isl_led 123.783      31      0.016  0.000
+## 35 sp_041_isl_led 193.691      31      0.022  0.000
+## 36 sp_042_isl_led 714.271      31      0.045  0.000
+## 37 sp_010_isl_lee 153.642      31      0.019  0.000
+## 38 sp_020_isl_lee 122.070      32      0.016  0.000
+## 39 sp_034_isl_lee 589.469      31      0.040  0.000
+## 40 sp_044_isl_lee 467.151      32      0.035  0.000</code></pre>
 <p>The itemfit(mirt.result)function assesses the goodness-of-fit indices at the item level by using the S-x2 test statistics (Kang &amp; Chen, 2007; Orlando &amp; Thissen, 2000, 2003).</p>
-<pre class="r"><code>#personfit(mirt.result, method = &quot;MAP&quot;, Theta= NULL, stats.only = TRUE)</code></pre>
+<pre class="r"><code>#personfit(mirt.result, method = &quot;MAP&quot;, Theta= NULL, stats.only = TRUE, QMC = TRUE)</code></pre>
 <p>Persons-fit skoðar Zh statistics (Drasgow, Levine &amp; Williams, 1985) þar sem að values stærri en 0 bendir til ásættanlegu fit, meðan ef það er minna en 0 þá er það ekki nóg og ásættanlegt.</p>
 <p>ákvörðunin um hvort að það eigi að birta niðurstöður prófhluta (subscora) til nemenda þarf að taka til greina niðurstöður úr model fit stuðlum, sérstaklega þegar einhverjir eru ekki í samræmi við aðra stuðla. MIRT-model sem litið er á með ásættanlega psycometric quality er þegar að mest allir global model fit stuðlanrir (M2, RMSEA, TLI og CFI t.d.) eru í það minnst við nálægt því að vera við ásættanlegt level og að flest item og persons estimates eru einni með ásættanleg fit.</p>
-<p>Ef við skoðum A-prófið fyrir 4 bekk þá sést niðurstöður M2 er 15,521.28 (<strong>df</strong> = 558, <strong>p</strong> &lt;.001) og RMSEA, TLI og CFI er 0.04, 0.86 og 0.87 respectively. þegar það er skoðað itemfit stuðlana þá sést að 8 atriði af þeim 36 sem gæti verið að séu ekki að falla nóg og vel að líkaninu þar sem þau atriði eru með <strong>p</strong> value hærri en 0.05.</p>
+<p>Ef við skoðum A-prófið fyrir 4 bekk þá sést niðurstöður M2 er 24457.18 (<strong>df</strong> = 700, <strong>p</strong> &lt;.001) og RMSEA, TLI og CFI er 0.04, 0.82 og 0.84 respectively. þegar það er skoðað itemfit stuðlana þá sést að 2 atriði af þeim 36 sem gæti verið að séu ekki að falla nóg og vel að líkaninu þar sem þau atriði eru með <strong>p</strong> value hærri en 0.05.</p>
 </div>
 </div>
 

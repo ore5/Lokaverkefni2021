@@ -369,61 +369,72 @@ summary {
 </div>
 
 
-<p>Hér verður farið yfir niðurstöður 4.bekk lesskilning með klassísku prófkenningunni - A próf</p>
-<div id="bekkur" class="section level2">
-<h2>4.bekkur</h2>
-<p>isl1804aLES, 3,15,16,5</p>
-<p>isl1904aLES, 3,15,16,5</p>
-<p>isl2004aLES, 3,15,16,5</p>
-<div id="bekkur-lesskilningur" class="section level3">
-<h3>4. bekkur, lesskilningur</h3>
-<pre class="r"><code>test.infor &lt;- c(3,15,16,5)
-
-data &lt;- isl04a
-
-test.data &lt;- data.prep (data, test.infor)</code></pre>
-<pre class="r"><code>scored.data &lt;- isl04a
-test.data &lt;- data.prep(scored.data,c(3,15,16,5), c(&quot;LEB&quot;,&quot;LEC&quot;,&quot;LED&quot;))</code></pre>
-<pre><code>## Warning: Name of the total test is needed after the subtest names in
-## subtest.names.</code></pre>
-<pre class="r"><code>Subscore &lt;- CTTsub(test.data, method = &quot;Haberman&quot;)
-names(Subscore)</code></pre>
-<pre><code>## [1] &quot;summary&quot;                   &quot;Correlation&quot;              
-## [3] &quot;Disattenuated.correlation&quot; &quot;PRMSE&quot;                    
-## [5] &quot;PRMSE.test&quot;                &quot;subscore.original&quot;        
-## [7] &quot;subscore.s&quot;                &quot;subscore.x&quot;               
-## [9] &quot;subscore.sx&quot;</code></pre>
-<p>Mean and standar deviation of orginal subscore,subscores, subscorex and and subscoresx</p>
+<p>Hér verður farið yfir niðurstöður 4.bekk lesskilning með Habermans aðferðinni sem að hann vann út frá klassísku prófkenningunni - A próf</p>
+<p>Um er að ræða greiningu á 4.bekkjar samræmdurprófunum fyrir A-próf á lesskilningi, árin 2018, 2019, 2020.</p>
+<p>lesskilningurinn inni heldur fjóra prófhluta sem inni atriði sem ættu að vera kanna sömu hugsmsíð og eiga að kanna færni og leikni nemenda í lesskilningi. í grunnum lesskilningsspurningum eru 15 atriði í djúpum lesskilningspurningum eru 16 atriði í skilningi orða og orðasambanda eru 5 atriði í yfirlitsspurningum/heildarskilningur með 4 atriði.</p>
+<p>Haberman kom fram með kenningu sína um added-value út frá klassískuprófkenningunni,</p>
+<p>Þegar Haberman aðferðin er notuð til þess að kanna hvort að prófhluti hafi þá próffræðilegu eiginleika til þess að veita upplýsingar um stöðu þeirra á prófhlutum,</p>
+<div id="prmse---output" class="section level3">
+<h3>PRMSE - output</h3>
+<p>áreiðanleiki (alfa-stuðullinn) af orginal subscorunum og heildarprófi. PRMSE gildi eru fyrir hvert prófhluta til þess að og upplýsingar um hvort það ætti að veita niðurstöður úr prófhlutu, og einni upplýsingar um added value.sx þar sem að ef það fær gildið <strong>1</strong> þá er hægt að gefa upplýsingar um skor prófhluta en ef það er <strong>0</strong> þá er prófið ekki með þær próffræðilega eiginleka til þess aðveita niðurstöður úr prófskorum. Áður en niðurstöður úr prófhlutum eru veittar þarf að sjá hvort þær séu með það sem kallast auka gildi (added-value). Reglan segir að</p>
+<ol style="list-style-type: decimal">
+<li><p>það er hægt að gefa út niðurstöður úr prófhlutum þegar að PRMSEs(PRMSE corresponding to subscore<strong>s</strong>) er hærri en PRMSEx (PRMSE corresponding to subscore<strong>x</strong>),</p></li>
+<li><p>hægt er að gefa út subscore þegar að PRMSE<strong>sx</strong> (PRMSE corresponding to subscore<strong>sx</strong>) er verulega hærri en hæðsta talan af þessum tveim PRMSE gildum (þ.a.s. PRMSE<strong>x</strong> og PRMSE<strong>sx</strong>)</p></li>
+</ol>
+<p>Árið 2013 kom Haberman og Sinharay með þá útskýringu á hvað væri ásættanlega stærð á “verulega hærri” tölu, þeir töldu að bilið á milli PRMSE<strong>s</strong> eða PRMSE<strong>x</strong> væri stærri en 10% af þessum augmented prófhlutum til þess að geta talist vera með svo kallað auka gildi, þar eftirfarandi skilyrði að vera náð : <span class="math display">\[PRMSEsx - (PRMSEs , PRMSEx) &gt; 0.1 * (1- (PRMSEs, PRMSEx))\]</span> ### Niðurstöður</p>
+<p>Niðurstöður úr aðferð Habermans til þess að reikna út prófhluta er eftirfarandi:</p>
+<p>þegar við skoðum mean og orginal subscorein þá sjáum við að orig. mean og subscore.s.mean eru hvorugt yfirgnæfandi hærra heldur en subscore.x.mean sem gefur til kynna að ekki er réttlætanlegt að veita upplýsingar um niðurstöður prófhluta.</p>
 <pre class="r"><code>Subscore$summary</code></pre>
 <pre><code>##     Orig.mean  Orig.sd subscore.s.mean subscore.s.sd subscore.x.mean
 ## LEB  8.414800 3.151543        8.414800     2.1836433        8.414800
 ## LEC 10.109912 3.005147       10.109912     1.9897546       10.109912
 ## LED  3.247302 1.281119        3.247302     0.5325464        3.247302
+## LEE  1.940328 1.141485        1.940328     0.3876004        1.940328
 ##     subscore.x.sd subscore.sx.mean subscore.sx.sd
-## LEB     2.4055913         8.414800      2.4058235
-## LEC     2.2231055        10.109912      2.2231327
-## LED     0.7253375         3.247302      0.7271665</code></pre>
-<p>PRMSE - output Including reliability (cronbach Alpha) of orginal subscales and the total test, PRMSE value for each method that can e used to decide whether subscore should be reported, and subscore reporting recommendations added.valureþs and added.valur.sx where ‘1’ indicates that subscores are of added valuen ‘0’ vice versa.</p>
+## LEB     2.4345304         8.414800      2.4354326
+## LEC     2.2308217        10.109912      2.2310802
+## LED     0.7332130         3.247302      0.7348334
+## LEE     0.6146663         1.940328      0.6147649</code></pre>
+<pre class="r"><code>Subscore$Correlation</code></pre>
+<pre><code>##           LEB       LEC       LED       LEE          
+## LEB 1.0000000 0.6859646 0.5287771 0.5094103 0.9083340
+## LEC 0.6859646 1.0000000 0.4832386 0.4541789 0.8848449
+## LED 0.5287771 0.4832386 1.0000000 0.3737074 0.6773851
+## LEE 0.5094103 0.4541789 0.3737074 1.0000000 0.6442880
+##     0.9083340 0.8848449 0.6773851 0.6442880 1.0000000</code></pre>
+<p>Þegar við skoðum RMSEA til að sjá hvort að það sé þetta auka gildið yfir heildarskor þá sjáum við að á ölllum prófhlutum er alfa mjög lágt frá 0.33 til 0.69. Sjáum að PRMSEs og PRMSEx er ekki 10% hærri en PRMSE.sx og því ekki með þetta auka gildi yfir heidlarskor og því ekki vert að gefa upplýsinar um niðurstöður prófhluta.</p>
 <pre class="r"><code>Subscore$PRMSE</code></pre>
 <pre><code>##         Alpha   PRMSE.s   PRMSE.x  PRMSE.sx added.value.s added.value.sx
-## LEB 0.6928807 0.6928807 0.8408891 0.8410515             0              0
-## LEC 0.6621156 0.6621156 0.8265230 0.8265432             0              0
-## LED 0.4156884 0.4156884 0.7711401 0.7750339             0              0
-##     0.8299787        NA        NA        NA            NA             NA</code></pre>
-<p>Using the subscore package, all subscores, including original subscores, subscores, subscorex, and subscoresx, are estimated at the same time when executing the main function.</p>
-<p>Before estimated subscores can be reported, one should examine whether they are of added value. Per Haberman (2008), this can be accomplished by examining the values of the PRMSEs. Specifically, the rules suggest (1) report subscores when PRMSEs (PRMSE corresponding to subscores) is greater than PRMSEx (PRMSE corresponding to subscorex) and (2) report subscoresx when PRMSEsx (PRMSE corresponding to subscoresx) is substantively greater than the maximum of the other two PRMSE values (i.e., PRMSEx and PRMSEsx). To decide what is “substantively greater,” Haberman and Sinharay (2013) further suggested that PRMSEsx ought to reduce the distance of PRMSEs or PRMSEx, whichever is larger, from 1.0 by at least 10% for augmented subscores to have added values. That is to say, to report augmented subscores, the following condition should be met:</p>
-<p>PRMSEsx - (PRMSEs or PRMSEx) &gt; 0.1 * (1- (PRMSEs or PRMSEx)).</p>
+## LEB 0.6928807 0.6928807 0.8612425 0.8618809             0              0
+## LEC 0.6621156 0.6621156 0.8322705 0.8324634             0              0
+## LED 0.4156884 0.4156884 0.7879765 0.7914632             0              0
+## LEE 0.3395581 0.3395581 0.8539344 0.8542085             0              0
+##     0.8437915        NA        NA        NA            NA             NA</code></pre>
+<pre class="r"><code>Subscore$PRMSE.test</code></pre>
+<pre><code>##         Alpha   PRMSE.s   PRMSE.x  PRMSE.sx added.value.s added.value.sx
+## LEB 0.6928807 0.6928807 0.8612425 0.8618809             0              0
+## LEC 0.6621156 0.6621156 0.8322705 0.8324634             0              0
+## LED 0.4156884 0.4156884 0.7879765 0.7914632             0              0
+## LEE 0.3395581 0.3395581 0.8539344 0.8542085             0              0
+##     0.8437915        NA        NA        NA            NA             NA
+##       Olkin.Z Williams.t Hedges.Olkin.Z
+## LEB -27.90215  -30.71243      1.7397578
+## LEC -24.45595  -26.14659      0.8857573
+## LED -24.01121  -24.85428      2.4411240
+## LEE -28.08142  -29.23603      0.6011628
+##            NA         NA             NA</code></pre>
 <pre class="r"><code>data(scored.data)
 #str(scored.data)</code></pre>
 <p>Wainer Augumented subscores</p>
+<p>Wainer kom með aðferð sína sem hann vann einnig út frá Klassísku prófkenningunni.</p>
 <pre class="r"><code>#subscore.Wainer(test.data)
 subscore.Wainer(test.data)$summary</code></pre>
 <pre><code>##          mean        SD Augmented.reliability
-## LEB  8.414800 2.4059558             0.8297037
-## LEC 10.109912 2.2254272             0.8290812
-## LED  3.247302 0.7293083             0.8237039</code></pre>
+## LEB  8.414800 2.4356911             0.8422583
+## LEC 10.109912 2.2349843             0.8418108
+## LED  3.247302 0.7365699             0.8385158
+## LEE  1.940328 0.6179732             0.8374576</code></pre>
 <pre class="r"><code>#subscore.Wainer(test.data)$subscore.augmented</code></pre>
-</div>
 </div>
 
 
