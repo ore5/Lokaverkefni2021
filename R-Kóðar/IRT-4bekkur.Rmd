@@ -1,0 +1,134 @@
+---
+title: "IRT"
+author: "Ólöf Ragna"
+date: "1/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+
+Adata <- readRDS("~/MS/MS-Atridabanki/Atriðabanki_2019-2020.rds")
+Adata %>% 
+  mutate(var = paste0(substr(var,1,11),profhluti)) -> Adata
+```
+
+Hér verður farið yfir niðurstöður 4.bekkjar í Lesskilningi, með IRT greiningu
+
+## 4.bekkur
+isl1804aLES, 3,15,16,5
+
+setja upp gögnin
+
+```{r}
+### 4. bekkur 
+# Íslensku próf 4.bekkur A-próf, 2018,2019,2020
+Adata %>% 
+  filter(grepl("isl04",test)) %>% 
+  filter(test_id == "a") %>%
+  group_by(id,test_id, test, var) %>% 
+  summarise(val = max(val)) %>% 
+  spread(var, val) -> isl04a
+
+isl04a <- isl04a[, -(1:3)] %>%
+  dplyr::select (ends_with(c("lea","leb","lec","led","lee" ,"mnc","mne","mnd")))
+
+isl04a <- isl04a[, (1:40)]
+
+```
+
+Þegar framkvæmd er IRT greining, koma prófskor í formi latent ability (eða theta) sem eru fengnar með tilteknu MIRT modeli.
+Við munum notast við pakkan mirt (Chalmers, 2020) í R. mirt pakkinn hefur möguleikan á að notast við mismunandi matsaðferðir eins og **expectation-maximization (EM)**, **Quasi-Monte Carlo EM**, **Metropolis-Hasting Robbins-Monro** og **Cock and Lieberman**.
+
+MIRT, Setja upp líkanið.
+```{r}
+#sæki mirt pakkann
+library(mirt)
+
+#Set upp þáttabygginguna
+atridi <- 'LEB = 1-15
+           LEC = 16-31
+           LED = 32-36
+           LEE = 37-40'
+#geri hlut sem að getur tekið við modelinu seinna í ferlinu
+model <- mirt.model(atridi)
+```
+
+Ákvörðun um hvaða pakka skildi nota við úrvinnsluna var tekin út frá því hvaða estimation method við vildum nota og út frá uppbyggingu gagnanna, og samvkæmt Chalmers(2020) er *QMCEM* aðferðin hentug fyrir fleiri en þrjá þætti og svo einnig út frá því að gögnin innihalda fjölkosta atriði.
+
+
+
+```{r}
+# nú þegar gögnin og uppsettning modelsins er tilbúin, er hægt að gera greininguna
+
+#fit-a þriggja þáttalíkan 3-PL, 3PL vegna þess að gögnin eru fjölkosta, QMCEM vegna þess að við erum með fjögurra þáttalíkan
+
+mirt.result <- mirt(isl04a, model, itemtype = "3PL", TOL = .0005, method = "QMCEM")
+```
+
+
+
+
+```{r}
+# full.scores = if FALSE then a summary table with factor scores for each unique pattern is displayed
+
+#Obtain theta estimatis (subscores) via MAP estimations
+
+theta.estimates <- fscores(mirt.result, full.scores = F, method = 'MAP', scores.only = TRUE)
+```
+
+## fscores
+Til þess að skoða F-scores er notast við fscores function-ið í mirt, method = MAP (maximum a posteriori)
+
+
+**Computes MAP, EAP, ML (Embretson & Reise, 2000), EAP for sum-scores (Thissen et al., 1995), or WLE (Warm, 1989) factor scores with a multivariate normal prior distribution using equally spaced quadrature. EAP scores for models with more than three factors are generally not recommended since the integration grid becomes very large, resulting in slower estimation and less precision if the quadpts are too low. Therefore, MAP scores should be used instead of EAP scores for higher dimensional models. Multiple imputation variants are possible for each estimator if a parameter information matrix was computed, which are useful if the sample size/number of items were small. As well, if the model contained latent regression predictors this information will be used in computing MAP and EAP estimates (for these models, full.scores=TRUE will always be used). Finally, plausible value imputation is also available, and will also account for latent regression predictor effects.**
+
+#####
+
+mirt - pakkinn í R gefur ekki út sjálfkrafa niðurstöður um hvort að psychometric qualityið sé nóg og gott til þess að hægt sé gefa út subscore niðurstöðurnar. 
+En það er hægt að taka ákvörðun um það með því að skoða model-fit statistic
+
+```{r}
+#obtein model fit indices : log-likelihood, AIC BIC
+mirt.result
+```
+
+```{r}
+coef(mirt.result)
+```
+
+
+M2 - gefur global model fit stuðla, og M2 statistic (Maydeu-Olivares & Joe, 2006) sem og aðra fit-stuðla, eins og root mean square error of approximation (RMSEA) <.05 merkrir gott fit, Tucker-Lewis Index (TLI) <.90 merkir ásættanlegt fit og svo Comparative fit index (CFI) <.90 merkir ásættanlegt fit
+
+```{r}
+#obtein global model-data fit indies, including m2(sem er vinsæll fit index þegar notaið er MIRT) and TLI, CFI that are based on fitting the null model.
+# spyrja út í - QMC sem er notað fyrir HIGH-DIMENSIONAL MODELS
+M2(mirt.result)
+```
+
+Itemfit- niðurstöðurnar
+
+```{r}
+#Item fit indices.
+itemfit(mirt.result)
+```
+
+The itemfit(mirt.result)function assesses the goodness-of-fit indices at the item level by using the S-x2 test statistics (Kang & Chen,
+2007; Orlando & Thissen, 2000, 2003).
+
+```{r}
+#personfit(mirt.result, method = "MAP", Theta= NULL, stats.only = TRUE, QMC = TRUE)
+```
+
+Persons-fit skoðar Zh statistics (Drasgow, Levine & Williams, 1985) þar sem að values stærri en 0 bendir til ásættanlegu fit, meðan ef það er minna en 0 þá er það ekki nóg og ásættanlegt.
+
+ákvörðunin um hvort að það eigi að birta niðurstöður prófhluta (subscora) til nemenda þarf að taka til greina niðurstöður úr model fit stuðlum, sérstaklega þegar einhverjir eru ekki í samræmi við aðra stuðla.
+MIRT-model sem litið er á með ásættanlega psycometric quality er þegar að mest allir global model fit stuðlanrir (M2, RMSEA, TLI og CFI t.d.) eru í það minnst við nálægt því að vera við ásættanlegt level og að flest item og persons estimates eru einni með ásættanleg fit.
+
+Ef við skoðum A-prófið fyrir 4 bekk þá sést
+niðurstöður M2 er 24457.18 (**df** = 700, **p** <.001) og RMSEA, TLI og CFI er 0.04, 0.82 og 0.84 respectively.
+þegar það er skoðað itemfit stuðlana þá sést að 2 atriði af þeim 36 sem gæti verið að séu ekki að falla nóg og vel að líkaninu þar sem þau atriði eru með **p** value hærri en 0.05.  

@@ -1,0 +1,121 @@
+---
+title: "CCT Haberman"
+author: "Ólöf Ragna"
+date: "1/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(subscore)
+
+Adata <- readRDS("~/MS/MS-Atridabanki/Atriðabanki_2019-2020.rds")
+Adata %>% 
+  mutate(var = paste0(substr(var,1,11),profhluti)) -> Adata
+```
+
+Hér verður farið yfir niðurstöður 4.bekk lesskilning með Habermans aðferðinni sem að hann vann út frá klassísku prófkenningunni - A próf
+
+
+Um er að ræða greiningu á 4.bekkjar samræmdurprófunum fyrir A-próf á lesskilningi, árin 2018, 2019, 2020.
+
+lesskilningurinn inni heldur fjóra prófhluta sem inni atriði sem ættu að vera kanna sömu hugsmsíð og eiga að kanna færni og leikni nemenda í lesskilningi. 
+í grunnum lesskilningsspurningum eru 15 atriði 
+í djúpum lesskilningspurningum eru 16 atriði 
+í skilningi orða og orðasambanda eru 5 atriði
+í yfirlitsspurningum/heildarskilningur með 4 atriði.
+
+Haberman kom fram með kenningu sína um added-value út frá klassískuprófkenningunni, 
+
+Þegar Haberman aðferðin er notuð til þess að kanna hvort að prófhluti hafi þá próffræðilegu eiginleika til þess að veita upplýsingar um stöðu þeirra á prófhlutum,
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+### 4. bekkur 
+# Íslensku próf 4.bekkur A-próf, 2018,2019,2020
+Adata %>% 
+  filter(grepl("isl04",test)) %>% 
+  filter(test_id == "a") %>%
+  group_by(id,test_id, test, var) %>% 
+  summarise(val = max(val)) %>% 
+  spread(var, val) -> isl04a
+
+isl04a <- isl04a[, -(1:3)] %>%
+  dplyr::select (ends_with(c("lea","leb","lec","led","lee" ,"mnc","mne","mnd")))
+
+isl04a <- isl04a[, (1:40)]
+
+```
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+test.infor <- c(4,15,16,5,4)
+
+data <- isl04a
+
+test.data <- data.prep (data, test.infor)
+```
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+scored.data <- isl04a
+test.data <- data.prep(scored.data,c(4,15,16,5,4), c("LEB","LEC","LED","LEE"))
+```
+
+```{r,message=FALSE, warning=FALSE, echo=FALSE}
+Subscore <- CTTsub(test.data, method = "Haberman")
+
+```
+
+### PRMSE - output
+
+áreiðanleiki (alfa-stuðullinn) af orginal subscorunum og heildarprófi.
+PRMSE gildi eru fyrir hvert prófhluta til þess að og upplýsingar um hvort það ætti að veita niðurstöður úr prófhlutu, og einni upplýsingar um added value.sx þar sem að ef það fær gildið **1** þá er hægt að gefa upplýsingar um skor prófhluta en ef það er **0** þá er prófið ekki með þær próffræðilega eiginleka til þess aðveita niðurstöður úr prófskorum. 
+Áður en niðurstöður úr prófhlutum eru veittar þarf að sjá hvort þær séu með það sem kallast auka gildi (added-value). Reglan segir að 
+
+(1) það er hægt að gefa út niðurstöður úr prófhlutum þegar að PRMSEs(PRMSE corresponding to subscore**s**) er hærri en PRMSEx (PRMSE corresponding to subscore**x**), 
+
+(2) hægt er að gefa út subscore þegar að PRMSE**sx** (PRMSE corresponding to subscore**sx**) er verulega hærri en hæðsta talan af þessum tveim PRMSE gildum (þ.a.s. PRMSE**x** og PRMSE**sx**)
+
+Árið 2013 kom Haberman og Sinharay með þá útskýringu á hvað væri ásættanlega stærð á "verulega hærri" tölu, þeir töldu að bilið á milli PRMSE**s** eða PRMSE**x** væri stærri en 10% af þessum augmented prófhlutum til þess að geta talist vera með svo kallað auka gildi, þar eftirfarandi skilyrði að vera náð :
+$$PRMSEsx - (PRMSEs , PRMSEx) > 0.1 * (1- (PRMSEs, PRMSEx))$$
+### Niðurstöður
+
+Niðurstöður úr aðferð Habermans til þess að reikna út prófhluta er eftirfarandi:
+
+þegar við skoðum mean og orginal subscorein þá sjáum við að orig. mean og subscore.s.mean eru hvorugt yfirgnæfandi hærra heldur en subscore.x.mean sem gefur til kynna að ekki er réttlætanlegt að veita upplýsingar um niðurstöður prófhluta.
+
+```{r}
+Subscore$summary
+Subscore$Correlation
+```
+
+Þegar við skoðum RMSEA til að sjá hvort að það sé þetta auka gildið yfir heildarskor þá sjáum við að á ölllum prófhlutum er alfa mjög lágt frá 0.33 til 0.69. 
+Sjáum að PRMSEs og PRMSEx er ekki 10% hærri en PRMSE.sx og því ekki með þetta auka gildi yfir heidlarskor og því ekki vert að gefa upplýsinar um niðurstöður prófhluta.
+```{r}
+Subscore$PRMSE
+Subscore$PRMSE.test
+```
+
+
+```{r}
+data(scored.data)
+#str(scored.data)
+
+```
+
+Wainer Augumented subscores
+
+Wainer kom með aðferð sína sem hann vann einnig út frá Klassísku prófkenningunni.
+
+```{r}
+#subscore.Wainer(test.data)
+subscore.Wainer(test.data)$summary
+#subscore.Wainer(test.data)$subscore.augmented
+```
+
+
+
+

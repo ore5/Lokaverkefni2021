@@ -1,0 +1,376 @@
+---
+title: "CFA"
+author: "Ólöf Ragna"
+date: "1/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+
+Adata <- readRDS("~/MS/MS-Atridabanki/Atriðabanki_2019-2020.rds")
+Adata %>% 
+  mutate(var = paste0(substr(var,1,11),profhluti)) -> Adata
+```
+
+Hér verður farið yfir niðurstöður staðfestandi Þáttagreiningar 4.bekkjar í Lesskilningi.
+
+Um er að ræða greiningu á 4.bekkjar samræmdurprófunum fyrir A-próf á lesskilningi, árin 2018, 2019, 2020.
+
+lesskilningurinn inni heldur fjóra prófhluta sem inni halda miserfið atriði sem eiga að kanna leikni í lesskilningi. í grunnum lesskilningsspurningum eru 15 atriði, í djúpum lesskilningspurningum eru 16 atriði, í skilningi orða og orðasambanda eru 5 atriði og svo eru yfirlitsspurningar/heildarskilningur með 4 atriði.
+
+Gerðar verðar þrjár mismunandi þáttagreiningar
+
+**Fyrsta**
+Fyrsta þáttagreiningin, inni heldur öll atriði eins og þau koma fram í prófhlutunum.
+
+**Önnur**
+Önnur þáttagreiningin þá verður leyft krosshleðslu milli yfirþáttar og atriði, þar sem að atriði hleður mikið á annan prófhluta. 
+
+**Þriðja**
+Höldum áfram að leifa krosshleðslur milli yfirþáttar og atriðis þar sem að atriðið er að hlaða mikið á annan þátt
+
+**Bifactorlíkan**
+Gert var Bifactorlíkan. 
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+### 4. bekkur 
+# Íslensku próf 4.bekkur A-próf, 2018,2019,2020
+Adata %>% 
+  filter(grepl("isl04",test)) %>% 
+  filter(test_id == "a") %>%
+  group_by(id,test_id, test, var) %>% 
+  summarise(val = max(val)) %>% 
+  spread(var, val) -> isl04a
+
+isl04a <- isl04a[, -(1:3)] %>%
+  dplyr::select (ends_with(c("lea","leb","lec","led","lee" ,"mnc","mne","mnd")))
+
+isl04a <- isl04a[, (1:40)]
+
+```
+
+þegar það er gert staðfestandi þáttagreining eru prófskor(subscore) tilreiknuð sem þáttaskor fyrir hvern þátt eða prófhluta(subscale)
+
+þegar þáttagreining er gerð í R er hún oft framkvæmd með pakkanum lavaan (Rosseel, 2017). með lavaan er hægt að fit-a margskonar módel. Einnig með lavaan er hægt að biðja um Mplus syntax (Muthén & Muthén, 2015)
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+library(lavaan)
+
+#set up the factor model to be fitted according to the test information 
+
+four.factor.model <- "
+LEB =~ sp_001_isl_leb + sp_005_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb
+
+LEC =~ sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec
+
+LED =~ sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_042_isl_led + sp_041_isl_led
+
+LEE =~ sp_010_isl_lee + sp_020_isl_lee +sp_034_isl_lee + sp_044_isl_lee
+"
+
+
+#Fit the Factor model and generate results in the format of Mplus output
+#
+
+fit.four.factor <- cfa(four.factor.model, data = isl04a, mimic = "mplus")
+```
+
+lavaan pakkin gefur okkur ekki upplýsingar beint út hvort að við eigum að veit niðurstöður úr prófhlutum (subscorea) heldur þurfum við að skoða mátsstuðla.
+
+Niðurstöður mátstuðla sýna X2 testið sýnir x2 = 5600.20, ***df*** = 734, ***p*** <.001)
+other fit CFI = .894, TLI = .888, RMSEA = .025
+
+þessir mátstuðlar eru ekki nægilega góðir til þess að uppfylla þær kröfur við setjum okkur.
+Einnig sjáum við að fylgni milli þátta er yfir 1 hjá LEB - LEC og einnig hjá LEB - LEE. 
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+factor.scores <- predict (fit.four.factor)
+
+#factor.scores
+
+summary(fit.four.factor, fit.measures = T, standardized = TRUE)
+
+#the function predict(fit.four.factor) can be used to compute factor scores using estimated parameters, as indicated by the last two lines of the commands
+#predict(fit.four.factor)
+
+```
+
+Hér sjáum við krosshleðslur, það er mikil hleðsla á milli atriða
+Næsta skref yrði að skoða hvaða atriði eru með mestu krosshleðslurnar við yfirþátt og athuga hvort það að leifa fylgni milli atriða og þáttar muni hafa áhrif á líkanið
+
+```{r}
+modificationIndices(fit.four.factor, sort.=TRUE, minimum.value=3)
+
+```
+
+## Önnur þáttagreining.
+
+Í annarri þáttagreiningunni, þá er leifð fylgni milli atriði við LEC þáttinn. 
+- 
+
+```{r}
+four.factor.model.F2 <- "LEB =~ sp_005_isl_leb + sp_001_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb
+
+LEC =~ sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec + sp_001_isl_leb
+
+LED =~ sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_042_isl_led + sp_041_isl_led
+
+LEE =~ sp_010_isl_lee + sp_020_isl_lee +sp_034_isl_lee + sp_044_isl_lee
+
+"
+
+#Fit the Factor model and generate results in the format of Mplus output
+#
+
+fit.four.factor.F2 <- cfa(four.factor.model.F2, data = isl04a, mimic = "mplus")
+
+lavInspect(fit.four.factor.F2, "cov.lv")
+#lavInspect(fit.four.factor.F, "theta")
+```
+
+Niðurstöðurnar sýna X2 testið sýnir x2 = 5497.44, ***df*** = 733, ***p*** <.001)
+other fit CFI = .896, TLI = .890, RMSEA = .024
+Þannig í raun er ekki mikil bæting á mátgæðum milli líkana.
+
+Fylgni milli þáttana er ennþá frekar há, en milli LEB - LEC er hún farin undir 1, enn ennþá yfir 1 hjá LEB - LEE
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+factor.scores <- predict(fit.four.factor.F2)
+
+#factor.scores
+
+summary(fit.four.factor.F2, fit.measures = T, standardized = TRUE)
+
+#the function predict(fit.four.factor) can be used to compute factor scores using estimated parameters, as indicated by the last two lines of the commands
+#predict(fit.four.factor)
+
+```
+
+Ef við skoðum aftur hleðslurnar þá er mikil krosshleðsla milli atriði 41 og prófhlutar LEC, því verður næsta skref að prófa að ath hvort að það atriði eigi betur við í þeim þætti
+
+```{r}
+
+modificationIndices(fit.four.factor.F2, sort.=TRUE, minimum.value=3,)
+
+```
+### Þriðja þáttagreiningin
+
+þriðja módelið þar sem það er háldið áfram með það sem var gert í annarri þáttagreiningunni, nú gerð krosshleðsla milli atriði 42 og prófhluta LEB
+
+```{r}
+four.factor.model.F3 <- "LEB =~ sp_005_isl_leb + sp_001_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb + sp_042_isl_led
+
+LEC =~ sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec + sp_001_isl_leb
+
+LED =~ sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_041_isl_led + sp_042_isl_led 
+
+LEE =~ sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
+
+
+"
+
+#Fit the Factor model and generate results in the format of Mplus output
+#
+
+fit.four.factor.F3 <- cfa(four.factor.model.F3, data = isl04a, mimic = "mplus")
+
+lavInspect(fit.four.factor.F3, "cov.lv")
+
+#lavInspect(fit.four.factor.F3, "theta")
+```
+Mátgæði Þriðju þáttagreiningarinnar, þar sjáum við að mátstuðlarnir eru nokkurnvegin að haldast í stað og lítil breyting á þeim.
+
+Niðurstöðurnar sýna X2 testið sýnir x2 = 5481.99, ***df*** = 732, ***p*** <.001)
+other fit CFI = .897, TLI = .890, RMSEA = .024
+
+Sjáum einnig að þegar að atriði 42 er komið í LEB þáttinn að mátstuðlarnir háldast enn nánast óbreyttir þannig að þessar breytirngar eru ekki að hafa nein áhrif á líkanið.
+
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+factor.scores <- predict(fit.four.factor.F3)
+
+#factor.scores
+
+summary(fit.four.factor.F3, fit.measures = T, standardized = TRUE)
+
+#the function predict(fit.four.factor) can be used to compute factor scores using estimated parameters, as indicated by the last two lines of the commands
+#predict(fit.four.factor)
+
+```
+
+Enn er mjög mikil fylgni á milli atriða, sem gæti verið að styðja stoðum við þá hugmynd að um sé einungis sé um að ræða einsþátta hugsmíð og að prófið sé ekki að hafa þá próffræðilegu eiginleika að hægt sé að gefa út skor prófhluta
+
+og þegar við skoðum núna MI-stuðlana þá sjáum við að líkanið vill leifa nokkuð margar krosshleðslur við LEB þáttinn,
+
+
+```{r}
+modificationIndices(fit.four.factor.F3, sort.=TRUE, minimum.value=3,)
+
+```
+
+Correlation residuals, tell you which relationships are not well accounted for in the model (e.g., residuals > 0.1 in absolute value are considered large deviations between observed and expected values).  That allows you to think about how your model can make up for that, rather than allowing modification indices to think for you. 
+
+```{r}
+#coef(fit.four.factor.F3)
+#Correlation residuals
+resid(fit.four.factor, type = "cor")
+
+```
+
+```{r}
+library(semPlot)
+semPlot::semPaths(fit.four.factor.F3, "std", layout = "tree2", edge.label.cex = 0.8, sizeMan = 6, edge.color ="black", col = "pink")
+```
+
+
+#### bifactormodel
+
+```{r}
+bifactormodel <- "
+BF =~ sp_001_isl_leb + sp_005_isl_leb +  sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb + sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec + sp_041_isl_led + sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_041_isl_led + sp_042_isl_led + sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
+
+LEB =~ sp_001_isl_leb + sp_005_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb
+
+LEC =~ sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec
+
+LED =~ sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_042_isl_led  + sp_041_isl_led
+
+LEE =~ sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
+#set covarians to 0
+LEB~~0* LEC
+LEB~~0* LED
+LEB~~0* LEE
+LEB~~0* BF 
+LEC~~0* LED
+LEC~~0* LEE
+LEC~~0* BF
+LED~~0*LEE
+LED~~0* BF
+#Set Varians to 1
+LEB~~1*LEB
+LEC~~1*LEC
+LED~~1*LED
+LEE~~1*LEE
+BF~~1*BF
+
+"
+
+fitbi <- cfa(bifactormodel, data = isl04a, mimic = "mplus")
+
+summary(fitbi, fit.measures = T, standardized = TRUE)
+#inspect(fitbi)
+```
+
+```{r}
+semPlot::semPaths(fitbi, "std", bifactor = "BF" , layout = "tree2", edge.label.cex = 0.7, sizeMan = 6, edge.color ="black", col = "pink")
+```
+
+Niðurstöður Bifactorlíkans, er að X2 testið sýnir x2 =  15520.29, ***df*** = 704, ***p*** <.001)
+other fit CFI = .678, TLI = .643, RMSEA = .044
+Líknaið er ekki að sýna fram á góð mátgæði
+
+### einsþáttalíkan
+
+```{r}
+one.factor.model <- "LEB =~ sp_001_isl_leb + sp_005_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb + sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec + sp_041_isl_led + sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_041_isl_led + sp_042_isl_led + sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
+"
+
+#Fit the Factor model and generate results in the format of Mplus output
+#
+
+fit.one.factor <- cfa(one.factor.model, data = isl04a, mimic = "mplus")
+
+lavInspect(fit.one.factor, "cov.lv")
+
+#lavInspect(fit.four.factor.F3, "theta")
+```
+Mátgæði Þriðju þáttagreiningarinnar, þar sjáum við að mátstuðlarnir eru nokkurnvegin að haldast í stað og lítil breyting á þeim.
+
+Niðurstöðurnar sýna X2 testið sýnir x2 = 5742.90, ***df*** = 740, ***p*** <.001)
+other fit CFI = .891, TLI = .885, RMSEA = .025
+
+Sjáum einnig að þegar að atriði 41 er komið í lec þáttinn að mátstuðlarnir háldast enn nánast óbreyttir þannig að þessar breytirngar eru ekki að hafa nein áhrif á líkanið.
+Að þeirri forsendu líka um að atriði 41 er að spyrjast fyrir um skilningi orða og orðasamband og passar spurningin þar við en ekki við um djúpan lesskilning þá er sennilega ekki skynsamt að halda áfram.
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+factor.scores <- predict(fit.one.factor)
+
+#factor.scores
+
+summary(fit.one.factor, fit.measures = T, standardized = TRUE)
+
+#the function predict(fit.four.factor) can be used to compute factor scores using estimated parameters, as indicated by the last two lines of the commands
+#predict(fit.four.factor)
+
+```
+
+Enn er mjög mikil fylgni á milli atriða, sem gæti verið að styðja stoðum við þá hugmynd að um sé einungis sé um að ræða einsþátta hugsmíð og að prófið sé ekki að hafa þá próffræðilegu eiginleika að hægt sé að gefa út skor prófhluta
+
+```{r}
+modificationIndices(fit.one.factor, sort.=TRUE, minimum.value=3,)
+
+```
+
+
+
+
+
+```{r}
+one.factor.model.F1 <- "LEB =~ sp_001_isl_leb + sp_005_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb + sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec + sp_041_isl_led + sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_041_isl_led + sp_042_isl_led + sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
+
+sp_029_isl_leb ~~ sp_030_isl_lec
+sp_038_isl_leb ~~ sp_044_isl_lee
+sp_030_isl_lec ~~ sp_034_isl_lee
+sp_043_isl_leb ~~ sp_042_isl_led
+sp_039_isl_leb ~~ sp_042_isl_led
+
+"
+
+#Fit the Factor model and generate results in the format of Mplus output
+#
+
+fit.one.factor.F1 <- cfa(one.factor.model.F1, data = isl04a, mimic = "mplus")
+
+lavInspect(fit.one.factor.F1, "cov.lv")
+
+#lavInspect(fit.four.factor.F1, "theta")
+```
+Mátgæði Þriðju þáttagreiningarinnar, þar sjáum við að mátstuðlarnir eru nokkurnvegin að haldast í stað og lítil breyting á þeim.
+
+Niðurstöðurnar sýna X2 testið sýnir x2 = 5742.90, ***df*** = 740, ***p*** <.001)
+other fit CFI = .891, TLI = .885, RMSEA = .025
+
+Sjáum einnig að þegar að atriði 41 er komið í lec þáttinn að mátstuðlarnir háldast enn nánast óbreyttir þannig að þessar breytirngar eru ekki að hafa nein áhrif á líkanið.
+Að þeirri forsendu líka um að atriði 41 er að spyrjast fyrir um skilningi orða og orðasamband og passar spurningin þar við en ekki við um djúpan lesskilning þá er sennilega ekki skynsamt að halda áfram.
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+factor.scores.F1 <- predict(fit.one.factor.F1)
+
+#factor.scores
+
+summary(fit.one.factor.F1, fit.measures = T, standardized = TRUE)
+
+#the function predict(fit.four.factor) can be used to compute factor scores using estimated parameters, as indicated by the last two lines of the commands
+#predict(fit.four.factor)
+
+```
+
+
+
+Enn er mjög mikil fylgni á milli atriða, sem gæti verið að styðja stoðum við þá hugmynd að um sé einungis sé um að ræða einsþátta hugsmíð og að prófið sé ekki að hafa þá próffræðilegu eiginleika að hægt sé að gefa út skor prófhluta
+
+```{r}
+modificationIndices(fit.one.factor.F1, sort.=TRUE, minimum.value=3)
+
+```
+
+### Niðurstöður Þáttagreiningar
+
+### Tilraunir til þess að bæta fyrstu þáttagreininguna var ekki að skila neinum úrbótum. þar sem mátgæðin stóðu nánast í stað og mikil fylngi milli atriða var einni enn til staðar sem að lætur allt benda til þess að það væri erfitt að samþykkja það að hægt væri að gefa út einkunnir fyrir hvern prófhluta út fá bágum skorum mátgæða og mikillrar fylgni milli atriða.
+
