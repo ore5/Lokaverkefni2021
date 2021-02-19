@@ -3,14 +3,16 @@ title: "CFA"
 author: "Ólöf Ragna"
 date: "1/21/2021"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE,  dev='svg'}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
+```{r, message=FALSE, warning=FALSE, echo=FALSE, dev='svg'}
 library(tidyverse)
 
 Adata <- readRDS("~/MS/MS-Atridabanki/Atriðabanki_2019-2020.rds")
@@ -96,6 +98,8 @@ factor.scores <- predict (fit.four.factor)
 
 summary(fit.four.factor, fit.measures = T, standardized = TRUE)
 
+lavInspect(fit.four.factor, "cov.lv")
+lavInspect(fit.four.factor, "cor.lv")
 #the function predict(fit.four.factor) can be used to compute factor scores using estimated parameters, as indicated by the last two lines of the commands
 #predict(fit.four.factor)
 
@@ -131,6 +135,7 @@ LEE =~ sp_010_isl_lee + sp_020_isl_lee +sp_034_isl_lee + sp_044_isl_lee
 fit.four.factor.F2 <- cfa(four.factor.model.F2, data = isl04a, mimic = "mplus")
 
 lavInspect(fit.four.factor.F2, "cov.lv")
+lavInspect(fit.four.factor.F2, "cor.lv")
 #lavInspect(fit.four.factor.F, "theta")
 ```
 
@@ -164,14 +169,13 @@ modificationIndices(fit.four.factor.F2, sort.=TRUE, minimum.value=3,)
 þriðja módelið þar sem það er háldið áfram með það sem var gert í annarri þáttagreiningunni, nú gerð krosshleðsla milli atriði 42 og prófhluta LEB
 
 ```{r}
-four.factor.model.F3 <- "LEB =~ sp_005_isl_leb + sp_001_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb + sp_042_isl_led
+four.factor.model.F3 <- "LEB =~ sp_005_isl_leb + sp_001_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb + sp_010_isl_lee 
 
 LEC =~ sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec + sp_001_isl_leb
 
 LED =~ sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_041_isl_led + sp_042_isl_led 
 
-LEE =~ sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
-
+LEE =~ sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee 
 
 "
 
@@ -181,8 +185,8 @@ LEE =~ sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
 fit.four.factor.F3 <- cfa(four.factor.model.F3, data = isl04a, mimic = "mplus")
 
 lavInspect(fit.four.factor.F3, "cov.lv")
+lavInspect(fit.four.factor.F3, "cor.lv")
 
-#lavInspect(fit.four.factor.F3, "theta")
 ```
 Mátgæði Þriðju þáttagreiningarinnar, þar sjáum við að mátstuðlarnir eru nokkurnvegin að haldast í stað og lítil breyting á þeim.
 
@@ -214,20 +218,87 @@ modificationIndices(fit.four.factor.F3, sort.=TRUE, minimum.value=3,)
 
 ```
 
+### Model 4
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+four.factor.model.F4 <- "LEB =~ sp_005_isl_leb + sp_001_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb + sp_010_isl_lee + sp_034_isl_lee + sp_020_isl_lee
+
+LEC =~ sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec + sp_001_isl_leb
+
+LED =~ sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_041_isl_led + sp_042_isl_led 
+
+LEE =~ sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee 
+
+"
+
+#Fit the Factor model and generate results in the format of Mplus output
+#
+
+fit.four.factor.F4 <- cfa(four.factor.model.F4, data = isl04a, mimic = "mplus")
+
+lavInspect(fit.four.factor.F4, "cov.lv")
+lavInspect(fit.four.factor.F4, "cor.lv")
+
+```
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+four.factor.model.F5 <- "LEB =~ sp_005_isl_leb + sp_001_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb
+
+LEC =~ sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec + sp_001_isl_leb
+
+LED =~ sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_041_isl_led + sp_042_isl_led 
+
+LEE =~ sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee 
+
+LEB =~ LEE
+
+"
+
+#Fit the Factor model and generate results in the format of Mplus output
+#
+
+fit.four.factor.F5 <- cfa(four.factor.model.F5, data = isl04a, mimic = "mplus")
+
+lavInspect(fit.four.factor.F5, "cov.lv")
+lavInspect(fit.four.factor.F5, "cor.lv")
+
+```
+
+
 Correlation residuals, tell you which relationships are not well accounted for in the model (e.g., residuals > 0.1 in absolute value are considered large deviations between observed and expected values).  That allows you to think about how your model can make up for that, rather than allowing modification indices to think for you. 
 
 ```{r}
 #coef(fit.four.factor.F3)
 #Correlation residuals
-resid(fit.four.factor, type = "cor")
-
+resid(fit.four.factor)
 ```
 
-```{r}
+```{r, dev='svg', fig.width = 12 , fig.height = 10}
 library(semPlot)
-semPlot::semPaths(fit.four.factor.F3, "std", layout = "tree2", edge.label.cex = 0.8, sizeMan = 6, edge.color ="black", col = "pink")
+semPlot::semPaths(fit.four.factor.F3, "std", layout = "tree2", edge.label.cex = 0.8, sizeMan = 6, edge.color ="black", col = "pink", fig.width = 10 , fig.height = 10)
 ```
+```{r}
+bifactor <- '
+general.factor   =~   sp_001_isl_leb + sp_005_isl_leb +  sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb + sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec + sp_041_isl_led + sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_041_isl_led + sp_042_isl_led + sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
 
+LEB =~ sp_001_isl_leb + sp_005_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb
+
+LEC =~ sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec
+
+LED =~ sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_042_isl_led  + sp_041_isl_led
+
+LEE =~ sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
+' 
+modelfit <- cfa(bifactor, data = isl04a[,1:40], orthogonal=TRUE)
+summary(modelfit, fit.measures = TRUE, standardize = TRUE)
+```
+bifactor <- '
+general.factor   =~ Easy_Reservation + Preferred_Seats + Flight_Options + Ticket_Prices + Seat_Comfort + Seat_Roominess + Overhead_Storage + 
+Clean_Aircraft + Courtesy + Friendliness + Helpfulness + Service
+
+ticketing =~ Easy_Reservation + Preferred_Seats + Flight_Options + Ticket_Prices
+aircraft  =~ Seat_Comfort + Seat_Roominess + Overhead_Storage + Clean_Aircraft
+service   =~ Courtesy + Friendliness + Helpfulness + Service
+' 
 
 #### bifactormodel
 
@@ -242,33 +313,19 @@ LEC =~ sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_00
 LED =~ sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_042_isl_led  + sp_041_isl_led
 
 LEE =~ sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
-#set covarians to 0
-LEB~~0* LEC
-LEB~~0* LED
-LEB~~0* LEE
-LEB~~0* BF 
-LEC~~0* LED
-LEC~~0* LEE
-LEC~~0* BF
-LED~~0*LEE
-LED~~0* BF
-#Set Varians to 1
-LEB~~1*LEB
-LEC~~1*LEC
-LED~~1*LED
-LEE~~1*LEE
-BF~~1*BF
+
 
 "
 
-fitbi <- cfa(bifactormodel, data = isl04a, mimic = "mplus")
+fitbi <- cfa(bifactormodel, data = isl04a, orthogonal = TRUE, mimic = "mplus")
 
 summary(fitbi, fit.measures = T, standardized = TRUE)
+#lavInspect(fitbi, "cor.lv")
 #inspect(fitbi)
 ```
 
-```{r}
-semPlot::semPaths(fitbi, "std", bifactor = "BF" , layout = "tree2", edge.label.cex = 0.7, sizeMan = 6, edge.color ="black", col = "pink")
+```{r, dev='svg'}
+semPlot::semPaths(fitbi, type = "std", bifactor = "BF" , layout = "tree2", intercepts = FALSE, edge.label.cex = 0.7, sizeMan = 5, edge.color ="black", col = "pink")
 ```
 
 Niðurstöður Bifactorlíkans, er að X2 testið sýnir x2 =  15520.29, ***df*** = 704, ***p*** <.001)
@@ -318,59 +375,27 @@ modificationIndices(fit.one.factor, sort.=TRUE, minimum.value=3,)
 ```
 
 
-
-
-
-```{r}
-one.factor.model.F1 <- "LEB =~ sp_001_isl_leb + sp_005_isl_leb + sp_008_isl_leb + sp_012_isl_leb + sp_013_isl_leb + sp_014_isl_leb + sp_015_isl_leb + sp_019_isl_leb + sp_029_isl_leb + sp_031_isl_leb + sp_032_isl_leb + sp_036_isl_leb + sp_038_isl_leb + sp_039_isl_leb + sp_043_isl_leb + sp_002_isl_lec + sp_003_isl_lec + sp_004_isl_lec + sp_006_isl_lec + sp_007_isl_lec + sp_011_isl_lec + sp_016_isl_lec + sp_017_isl_lec + sp_018_isl_lec + sp_025_isl_lec + sp_026_isl_lec + sp_027_isl_lec + sp_030_isl_lec + sp_033_isl_lec + sp_035_isl_lec + sp_037_isl_lec + sp_041_isl_led + sp_009_isl_led + sp_028_isl_led + sp_040_isl_led + sp_041_isl_led + sp_042_isl_led + sp_010_isl_lee + sp_020_isl_lee + sp_034_isl_lee + sp_044_isl_lee
-
-sp_029_isl_leb ~~ sp_030_isl_lec
-sp_038_isl_leb ~~ sp_044_isl_lee
-sp_030_isl_lec ~~ sp_034_isl_lee
-sp_043_isl_leb ~~ sp_042_isl_led
-sp_039_isl_leb ~~ sp_042_isl_led
-
-"
-
-#Fit the Factor model and generate results in the format of Mplus output
-#
-
-fit.one.factor.F1 <- cfa(one.factor.model.F1, data = isl04a, mimic = "mplus")
-
-lavInspect(fit.one.factor.F1, "cov.lv")
-
-#lavInspect(fit.four.factor.F1, "theta")
-```
-Mátgæði Þriðju þáttagreiningarinnar, þar sjáum við að mátstuðlarnir eru nokkurnvegin að haldast í stað og lítil breyting á þeim.
-
-Niðurstöðurnar sýna X2 testið sýnir x2 = 5742.90, ***df*** = 740, ***p*** <.001)
-other fit CFI = .891, TLI = .885, RMSEA = .025
-
-Sjáum einnig að þegar að atriði 41 er komið í lec þáttinn að mátstuðlarnir háldast enn nánast óbreyttir þannig að þessar breytirngar eru ekki að hafa nein áhrif á líkanið.
-Að þeirri forsendu líka um að atriði 41 er að spyrjast fyrir um skilningi orða og orðasamband og passar spurningin þar við en ekki við um djúpan lesskilning þá er sennilega ekki skynsamt að halda áfram.
-
-```{r, echo = FALSE, warning = FALSE, message=FALSE}
-factor.scores.F1 <- predict(fit.one.factor.F1)
-
-#factor.scores
-
-summary(fit.one.factor.F1, fit.measures = T, standardized = TRUE)
-
-#the function predict(fit.four.factor) can be used to compute factor scores using estimated parameters, as indicated by the last two lines of the commands
-#predict(fit.four.factor)
-
-```
-
-
-
-Enn er mjög mikil fylgni á milli atriða, sem gæti verið að styðja stoðum við þá hugmynd að um sé einungis sé um að ræða einsþátta hugsmíð og að prófið sé ekki að hafa þá próffræðilegu eiginleika að hægt sé að gefa út skor prófhluta
-
-```{r}
-modificationIndices(fit.one.factor.F1, sort.=TRUE, minimum.value=3)
-
-```
-
 ### Niðurstöður Þáttagreiningar
 
 ### Tilraunir til þess að bæta fyrstu þáttagreininguna var ekki að skila neinum úrbótum. þar sem mátgæðin stóðu nánast í stað og mikil fylngi milli atriða var einni enn til staðar sem að lætur allt benda til þess að það væri erfitt að samþykkja það að hægt væri að gefa út einkunnir fyrir hvern prófhluta út fá bágum skorum mátgæða og mikillrar fylgni milli atriða.
+```{r}
+lavInspect(fit.four.factor, "cov.lv")
+lavInspect(fit.four.factor, "cor.lv")
+
+lavInspect(fit.four.factor.F2, "cov.lv")
+lavInspect(fit.four.factor.F2, "cor.lv")
+
+lavInspect(fit.four.factor.F3, "cov.lv")
+lavInspect(fit.four.factor.F3, "cor.lv")
+
+lavInspect(fit.four.factor.F4, "cov.lv")
+lavInspect(fit.four.factor.F4, "cor.lv")
+
+lavInspect(fit.four.factor.F5, "cov.lv")
+lavInspect(fit.four.factor.F5, "cor.lv")
+
+lavInspect(fit.one.factor, "cov.lv")
+lavInspect(fit.one.factor, "cor.lv")
+
+```
 
