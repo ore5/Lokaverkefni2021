@@ -1,0 +1,193 @@
+---
+title: "Herma líkan með hárri þáttafylgni úr meistaraverkefni Ólafar"
+author: "Guðmundur Arnkelsson"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: 
+     dev: 'svg'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tictoc)
+library(tidyverse)
+library(simsem)
+getConverge <- function(object) {
+  convergence <- factor(object@converged == 0, levels= c(TRUE, FALSE), labels= c('convergence', 'no convergence'))
+  n <-  object@n
+  cat('summary of convergence\n')
+  table(convergence, n)
+}
+```
+
+
+# Líkan með þáttafylgni 0,96
+
+Hér bý ég til þýðislíkanið og úrvinnslulíkanið.
+
+```{r }
+popModel <- "
+    LEB =~ 0.4*leb01 + 0.4*leb05 + 0.4*leb08 + 0.4*leb12 + 0.4*leb13 + 
+           0.4*leb14 + 0.3*leb15 + 0.4*leb19 + 0.5*leb29 + 0.3*leb31 + 
+           0.2*leb32 + 0.3*leb36 + 0.3*leb38 + 0.5*leb39 + 0.4*leb43
+    LEC =~ 0.5*lec02 + 0.3*lec03 + 0.2*lec04 + 0.4*lec06 + 0.5*lec07 + 
+           0.4*lec11 + 0.4*lec16 + 0.5*lec17 + 0.02*lec18 + 0.1*lec25 + 
+           0.3*lec26 + 0.4*lec27 + 0.4*lec30 + 0.4*lec33 + 0.4*lec35 + 
+           0.3*lec37
+   LED =~  0.3*led09 + 0.4*led28 + 0.2*led40 + 0.4*led41 + 0.5*led42
+   LEE =~  0.3*lee10 + 0.3*lee20 + 0.4*lee34 + 0.4*lee44
+    
+    LEB ~~ 0.960*LEC + 0.960*LED + 0.960*LEE
+    LEC ~~ 0.960*LED + 0.960*LEE
+    LED ~~ 0.960*LEE
+    
+    LEB ~~ 1*LEB
+    LEC ~~ 1*LEC
+    LED ~~ 1*LED
+    LEE ~~ 1*LEE
+    
+    leb01 ~~ 0.84*leb01
+    leb05 ~~ 0.84*leb05
+    leb08 ~~ 0.84*leb08
+    leb12 ~~ 0.84*leb12
+    leb13 ~~ 0.84*leb13
+    leb14 ~~ 0.84*leb14
+    leb15 ~~ 0.91*leb15
+    leb19 ~~ 0.84*leb19
+    leb29 ~~ 0.75*leb29
+    leb31 ~~ 0.91*leb31
+    leb32 ~~ 0.96*leb32
+    leb36 ~~ 0.91*leb36
+    leb38 ~~ 0.91*leb38
+    leb39 ~~ 0.75*leb39
+    leb43 ~~ 0.84*leb43
+    
+    lec02 ~~ 0.75*lec02
+    lec03 ~~ 0.91*lec03
+    lec04 ~~ 0.96*lec04
+    lec06 ~~ 0.84*lec06
+    lec07 ~~ 0.75*lec07
+    lec11 ~~ 0.84*lec11
+    lec16 ~~ 0.84*lec16
+    lec17 ~~ 0.75*lec17
+    lec18 ~~ 0.9996*lec18
+    lec25 ~~ 0.99*lec25
+    lec26 ~~ 0.91*lec26
+    lec27 ~~ 0.84*lec27
+    lec30 ~~ 0.84*lec30
+    lec33 ~~ 0.84*lec33
+    lec35 ~~ 0.84*lec35    
+    lec37 ~~ 0.91*lec37
+    
+    led09 ~~ 0.91*led09
+    led28 ~~ 0.84*led28
+    led40 ~~ 0.96*led40
+    led41 ~~ 0.84*led41
+    led42 ~~ 0.75*led42
+
+    lee10 ~~ 0.91*lee10
+    lee20 ~~ 0.91*lee20
+    lee34 ~~ 0.84*lee34
+    lee44 ~~ 0.84*lee44
+"
+
+analyzeModel <- "
+    LEB =~ leb01 + leb05 + leb08 + leb12 + leb13 + 
+           leb14 + leb15 + leb19 + leb29 + leb31 + 
+           leb32 + leb36 + leb38 + leb39 + leb43
+    LEC =~ lec02 + lec03 + lec04 + lec06 + lec07 + 
+           lec11 + lec16 + lec17 + lec18 + lec25 + 
+           lec26 + lec27 + lec30 + lec33 + lec35 + 
+           lec37
+   LED =~  led09 + led28 + led40 + led41 + led42
+   LEE =~  lee10 + lee20 + lee34 + lee44
+"
+
+```
+
+Síðan læt ég lavaan spýta þýðislíkaninu út aftur til að sjá hvort ég hef gert þetta rétt og fæ mynd einnig til staðfestingar. 
+
+```{r fig.height=7, fig.width=7}
+pop.fit <- cfa(popModel, fixed.x = FALSE)
+summary(pop.fit, standardized = TRUE, rsquare = TRUE) 
+pop.cov <- fitted(pop.fit)$cov 
+semPlot::semPaths(pop.fit, "std", edge.label.cex = 0.8, layout= 'circle2', sizeMan= 4, style= 'lisrel')
+```
+
+```{r}
+corrplot::corrplot(cov2cor(pop.cov), method= 'ellipse',diag= FALSE, tl.cex= 0.6)
+qgraph::qgraph(cov2cor(pop.cov), groups= list(LEB= 1:15, LEC= 16:31, LED= 32:36, LEE= 37:40), layout= 'circle')
+qgraph::qgraph(cov2cor(pop.cov), groups= list(LEB= 1:15, LEC= 16:31, LED= 32:36, LEE= 37:40))
+```
+
+
+Þetta virðist líta svo ljómandi vel út, allt eins og það á að vera a.m.k. við snögga athugun. 
+
+```{r cache= TRUE}
+tic()
+Output <- sim(10^3, analyzeModel, n=10^4, generate=popModel, lavaanfun = "cfa", std.lv = TRUE, multicore= TRUE, numProc = parallel::detectCores() - 2)
+# summary(Output)
+toc()
+summaryConverge(Output)
+getCutoff(Output, alpha= c(0.05, 0.50, 0.95)) %>% round(3)
+```
+
+```{r }
+summaryParam(Output, improper= FALSE, detail= TRUE, digits= 3) %>% 
+    select(`Estimate Average`, `Average Param`, `Rel Bias`, `Estimate SD`, `Average SE`, `Rel SE Bias`) %>% 
+    filter(abs(`Rel Bias`) >= 0.1 | abs(`Rel SE Bias`) >= 0.1)
+```
+
+```{r}
+coef(Output) %>%
+  dplyr::select(`LEB~~LEC`:`LED~~LEE`) %>%
+  pivot_longer(`LEB~~LEC`:`LED~~LEE`) %>%
+  ggplot(aes(y = value, x = name)) +
+  geom_violin()
+
+tmp.num <- dplyr::select(coef(Output), `LEB~~LEC`:`LED~~LEE`) %>%
+  rowwise() %>%
+  dplyr::transmute(max = max(c(`LEB~~LEC`, `LEB~~LED`, `LEB~~LEE`, `LEC~~LED`, `LEC~~LEE`, `LED~~LEE`))) %>%
+  pull(var = "max") > 1
+table(tmp.num)
+```
+
+
+# Þáttafylgni 0,98
+
+Eftirfarandi byggist á því að þáttafylgnin í `popModel` sé tilgreind sem 0.960, þ.e. með þremur aukastöfum. 
+
+```{r cache=TRUE}
+popModel_0.98 <- gsub("0.960", "0.980", popModel, fixed = TRUE) # Hækka þáttafylgnina
+
+tic()
+Output_0.98 <- sim(10^3, analyzeModel, n = 10^4, generate = popModel_0.98, lavaanfun = "cfa", 
+                   std.lv = TRUE, multicore = TRUE, numProc = parallel::detectCores() - 2)
+# summary(Output)
+toc()
+summaryConverge(Output_0.98)
+getCutoff(Output_0.98, alpha = c(0.05, 0.50, 0.95)) %>% round(3)
+
+```
+
+```{r }
+summaryParam(Output_0.98, improper= FALSE, detail= TRUE, digits= 3) %>% 
+    select(`Estimate Average`, `Average Param`, `Rel Bias`, `Estimate SD`, `Average SE`, `Rel SE Bias`) %>% 
+    filter(abs(`Rel Bias`) >= 0.1 | abs(`Rel SE Bias`) >= 0.1)
+```
+
+```{r}
+coef(Output_0.98) %>%
+  dplyr::select(`LEB~~LEC`:`LED~~LEE`) %>%
+  pivot_longer(`LEB~~LEC`:`LED~~LEE`) %>%
+  ggplot(aes(y = value, x = name)) +
+  geom_violin()
+
+tmp.num <- dplyr::select(coef(Output_0.98), `LEB~~LEC`:`LED~~LEE`) %>%
+  rowwise() %>%
+  dplyr::transmute(max = max(c(`LEB~~LEC`, `LEB~~LED`, `LEB~~LEE`, `LEC~~LED`, `LEC~~LEE`, `LED~~LEE`))) %>%
+  pull(var = "max") > 1
+table(tmp.num)
+```
+
